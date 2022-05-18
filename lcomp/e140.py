@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from numpy import array, frombuffer, int16, putmask
+from numpy import array, frombuffer, int16, putmask, insert
 from ctypes import cast, POINTER, c_ushort
 import logging
 
@@ -40,13 +40,18 @@ L_DESCRIPTOR_BASE_E140    = 0x2780
 L_RAM_E140                = 0x8000
 
 
-def GetDataADC(daqpar, plDescr, address, size, offset=0):
-    ''' ВАЖНО !!!
-        Размер буфера (size) должен быть кратен числу используемых каналов
-    '''
+_data14b_tail = []
+
+def GetDataADC(daqpar, plDescr, address, size):
+    global _data14b_tail
 
     arr_ptr = cast(address, POINTER(c_ushort * size))[0]
-    data14b = frombuffer(arr_ptr, int16, offset=offset).reshape((daqpar.NCh, -1), order='F') & 0x3FFF
+
+    data14b = frombuffer(arr_ptr, int16, count=size)
+    data14b = insert(data14b, 0, _data14b_tail)
+    _data14b_tail = data14b[data14b.size - data14b.size % daqpar.NCh:]
+    data14b = data14b[:data14b.size - data14b.size % daqpar.NCh].reshape((daqpar.NCh, -1), order='F') & 0x3FFF
+
     putmask(data14b, data14b > 8192, data14b - 16384)
     gain = (array(daqpar.Chn) >> 6 & 0x3)[:daqpar.NCh, None]
 

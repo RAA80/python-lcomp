@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from numpy import array, frombuffer, int16, putmask
+from numpy import array, frombuffer, int16, putmask, insert
 from ctypes import cast, POINTER, c_ushort
 import logging
 
@@ -61,15 +61,42 @@ CH_2 = 0x02
 CH_3 = 0x03
 
 
-def GetDataADC(daqpar, plDescr, address, size, offset=0):
-    ''' ВАЖНО !!!
-        Размер буфера (size) должен быть кратен числу используемых каналов
-    '''
+_data14b_tail = []
+
+def GetDataADC(daqpar, plDescr, address, size):
+    global _data14b_tail
 
     arr_ptr = cast(address, POINTER(c_ushort * size))[0]
-    data14b = frombuffer(arr_ptr, int16, offset=offset).reshape((daqpar.NCh, -1), order='F') & 0x3FFF
+
+    data14b = frombuffer(arr_ptr, int16, count=size)
+    data14b = insert(data14b, 0, _data14b_tail)
+    _data14b_tail = data14b[data14b.size - data14b.size % daqpar.NCh:]
+    data14b = data14b[:data14b.size - data14b.size % daqpar.NCh].reshape((daqpar.NCh, -1), order='F') & 0x3FFF
+
     putmask(data14b, data14b > 8192, data14b - 16384)
-    gain = (array(daqpar.Chn) >> 6 & 0x3)[:daqpar.NCh, None]
+    gain = []
+    for ch in range(daqpar.NCh):
+        if daqpar.Chn[ch] == 0:
+            if (daqpar.AdcIMask & (SIG_0 | V03_0)) == (SIG_0 | V03_0):   gain.append(2)
+            elif (daqpar.AdcIMask & (SIG_0 | V10_0)) == (SIG_0 | V10_0): gain.append(1)
+            elif (daqpar.AdcIMask & (SIG_0 | V30_0)) == (SIG_0 | V30_0): gain.append(0)
+            else: gain.append(0)
+        elif daqpar.Chn[ch] == 1:
+            if (daqpar.AdcIMask & (SIG_1 | V03_1)) == (SIG_1 | V03_1):   gain.append(2)
+            elif (daqpar.AdcIMask & (SIG_1 | V10_1)) == (SIG_1 | V10_1): gain.append(1)
+            elif (daqpar.AdcIMask & (SIG_1 | V30_1)) == (SIG_1 | V30_1): gain.append(0)
+            else: gain.append(0)
+        elif daqpar.Chn[ch] == 2:
+            if (daqpar.AdcIMask & (SIG_2 | V03_2)) == (SIG_2 | V03_2):   gain.append(2)
+            elif (daqpar.AdcIMask & (SIG_2 | V10_2)) == (SIG_2 | V10_2): gain.append(1)
+            elif (daqpar.AdcIMask & (SIG_2 | V30_2)) == (SIG_2 | V30_2): gain.append(0)
+            else: gain.append(0)
+        elif daqpar.Chn[ch] == 3:
+            if (daqpar.AdcIMask & (SIG_3 | V03_3)) == (SIG_3 | V03_3):   gain.append(2)
+            elif (daqpar.AdcIMask & (SIG_3 | V10_3)) == (SIG_3 | V10_3): gain.append(1)
+            elif (daqpar.AdcIMask & (SIG_3 | V30_3)) == (SIG_3 | V30_3): gain.append(0)
+            else: gain.append(0)
+    gain = array(gain)[:daqpar.NCh, None]
 
     if data14b[(data14b > 8000) | (data14b < -8000)].any():
         _logger.warning("Channel overload detected !!!")
