@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from numpy import array, frombuffer, int16, putmask, insert
-from ctypes import cast, POINTER, c_ushort
 import logging
+from ctypes import cast, POINTER, c_ushort, LittleEndianStructure, Union, c_uint16
+from numpy import (array, frombuffer, int16, putmask, insert, multiply, divide,
+                   float32, split, add)
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -61,52 +62,80 @@ CH_2 = 0x02
 CH_3 = 0x03
 
 
-_data14b_tail = []
+class _AdcIMask_bits(LittleEndianStructure):
+    _fields_ = [("_",     c_uint16, 1),
+                ("V10_1", c_uint16, 1),
+                ("V03_1", c_uint16, 1),
+                ("V10_0", c_uint16, 1),
+                ("V03_0", c_uint16, 1),
+                ("_",     c_uint16, 3),
+                ("V03_2", c_uint16, 1),
+                ("SIG_1", c_uint16, 1),
+                ("SIG_0", c_uint16, 1),
+                ("SIG_3", c_uint16, 1),
+                ("SIG_2", c_uint16, 1),
+                ("V10_3", c_uint16, 1),
+                ("V03_3", c_uint16, 1),
+                ("V10_2", c_uint16, 1)]
+
+class _AdcIMask(Union):
+    _anonymous_ = ("bit",)
+    _fields_ = [("bit", _AdcIMask_bits),
+                ("value", c_uint16)]
+
+def _gain_index(mask, channel):
+    if channel == 0:
+        if mask.SIG_0 & mask.V03_0: return 2
+        elif mask.SIG_0 & mask.V10_0: return 1
+        elif mask.SIG_0: return 0
+        else: return 0
+    elif channel == 1:
+        if mask.SIG_1 & mask.V03_1: return 2
+        elif mask.SIG_1 & mask.V10_1: return 1
+        elif mask.SIG_1: return 0
+        else: return 0
+    elif channel == 2:
+        if mask.SIG_2 & mask.V03_2: return 2
+        elif mask.SIG_2 & mask.V10_2: return 1
+        elif mask.SIG_2: return 0
+        else: return 0
+    elif channel == 3:
+        if mask.SIG_3 & mask.V03_3: return 2
+        elif mask.SIG_3 & mask.V10_3: return 1
+        elif mask.SIG_3: return 0
+        else: return 0
 
 def GetDataADC(daqpar, plDescr, address, size):
-    global _data14b_tail
+    GetDataADC.tail = getattr(GetDataADC, "tail", [])
 
     arr_ptr = cast(address, POINTER(c_ushort * size))[0]
 
-    data14b = frombuffer(arr_ptr, int16, count=size)
-    data14b = insert(data14b, 0, _data14b_tail)
-    _data14b_tail = data14b[data14b.size - data14b.size % daqpar.NCh:]
-    data14b = data14b[:data14b.size - data14b.size % daqpar.NCh].reshape((daqpar.NCh, -1), order='F') & 0x3FFF
-
+    dataraw = insert(frombuffer(arr_ptr, int16), 0, GetDataADC.tail)
+    dataraw, GetDataADC.tail = split(dataraw, [dataraw.size - dataraw.size % daqpar.NCh,])
+    data14b = dataraw.reshape((daqpar.NCh, -1), order='F') & 0x3FFF
     putmask(data14b, data14b > 8192, data14b - 16384)
-    gain = []
-    for ch in range(daqpar.NCh):
-        if daqpar.Chn[ch] == 0:
-            if (daqpar.AdcIMask & (SIG_0 | V03_0)) == (SIG_0 | V03_0):   gain.append(2)
-            elif (daqpar.AdcIMask & (SIG_0 | V10_0)) == (SIG_0 | V10_0): gain.append(1)
-            elif (daqpar.AdcIMask & (SIG_0 | V30_0)) == (SIG_0 | V30_0): gain.append(0)
-            else: gain.append(0)
-        elif daqpar.Chn[ch] == 1:
-            if (daqpar.AdcIMask & (SIG_1 | V03_1)) == (SIG_1 | V03_1):   gain.append(2)
-            elif (daqpar.AdcIMask & (SIG_1 | V10_1)) == (SIG_1 | V10_1): gain.append(1)
-            elif (daqpar.AdcIMask & (SIG_1 | V30_1)) == (SIG_1 | V30_1): gain.append(0)
-            else: gain.append(0)
-        elif daqpar.Chn[ch] == 2:
-            if (daqpar.AdcIMask & (SIG_2 | V03_2)) == (SIG_2 | V03_2):   gain.append(2)
-            elif (daqpar.AdcIMask & (SIG_2 | V10_2)) == (SIG_2 | V10_2): gain.append(1)
-            elif (daqpar.AdcIMask & (SIG_2 | V30_2)) == (SIG_2 | V30_2): gain.append(0)
-            else: gain.append(0)
-        elif daqpar.Chn[ch] == 3:
-            if (daqpar.AdcIMask & (SIG_3 | V03_3)) == (SIG_3 | V03_3):   gain.append(2)
-            elif (daqpar.AdcIMask & (SIG_3 | V10_3)) == (SIG_3 | V10_3): gain.append(1)
-            elif (daqpar.AdcIMask & (SIG_3 | V30_3)) == (SIG_3 | V30_3): gain.append(0)
-            else: gain.append(0)
-    gain = array(gain)[:daqpar.NCh, None]
 
     if data14b[(data14b > 8000) | (data14b < -8000)].any():
         _logger.warning("Channel overload detected !!!")
+    data14b = data14b.astype(float32)
 
-    VRange = array([3.0, 1.0, 0.3])[gain]
+    mask = _AdcIMask()
+    mask.value = daqpar.AdcIMask
+    gain = array([_gain_index(mask, daqpar.Chn[ch]) for ch in range(daqpar.NCh)])[:daqpar.NCh, None]
+
+    VRange = array([3.0, 1.0, 0.3], dtype=float32)[gain]
 
     if plDescr.t6.Rev == "A":
-        A = array(plDescr.t6.KoefADC)[gain + 0]           # OffsetCalibration
-        B = array(plDescr.t6.KoefADC)[gain + 12]          # ScaleCalibration
+        koef = array(plDescr.t6.KoefADC, dtype=float32)
+        A = koef[gain + 0]                          # OffsetCalibration
+        B = koef[gain + 12]                         # ScaleCalibration
 
-        return (A + data14b) * B * VRange / 8000.0
+        add(A, data14b, out=data14b)                #
+        multiply(data14b, B, out=data14b)           # Оптимизированная версия ...
+        multiply(data14b, VRange, out=data14b)      # ... (A + data14b) * B * VRange / 8000.0
+        divide(data14b, 8000.0, out=data14b)        #
     else:
-        return data14b * VRange / 8000.0
+        multiply(data14b, VRange, out=data14b)      # Оптимизированная версия ...
+        divide(data14b, 8000.0, out=data14b)        # ... data14b * VRange / 8000.0
+
+    return data14b

@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from numpy import array, frombuffer, int16, putmask, insert
-from ctypes import cast, POINTER, c_ushort
 import logging
+from ctypes import cast, POINTER, c_ushort
+from numpy import (array, frombuffer, int16, putmask, insert, multiply, divide,
+                   float32, split, add)
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -40,27 +41,31 @@ L_DESCRIPTOR_BASE_E140    = 0x2780
 L_RAM_E140                = 0x8000
 
 
-_data14b_tail = []
-
 def GetDataADC(daqpar, plDescr, address, size):
-    global _data14b_tail
+    GetDataADC.tail = getattr(GetDataADC, "tail", [])
 
     arr_ptr = cast(address, POINTER(c_ushort * size))[0]
 
-    data14b = frombuffer(arr_ptr, int16, count=size)
-    data14b = insert(data14b, 0, _data14b_tail)
-    _data14b_tail = data14b[data14b.size - data14b.size % daqpar.NCh:]
-    data14b = data14b[:data14b.size - data14b.size % daqpar.NCh].reshape((daqpar.NCh, -1), order='F') & 0x3FFF
-
+    dataraw = insert(frombuffer(arr_ptr, int16), 0, GetDataADC.tail)
+    dataraw, GetDataADC.tail = split(dataraw, [dataraw.size - dataraw.size % daqpar.NCh,])
+    data14b = dataraw.reshape((daqpar.NCh, -1), order='F') & 0x3FFF
     putmask(data14b, data14b > 8192, data14b - 16384)
-    gain = (array(daqpar.Chn) >> 6 & 0x3)[:daqpar.NCh, None]
 
     if data14b[(data14b > 8000) | (data14b < -8000)].any():
         _logger.warning("Channel overload detected !!!")
+    data14b = data14b.astype(float32)
 
-    VRange = array([10.0, 2.5, 0.625, 0.15625])[gain]
+    gain = (array(daqpar.Chn) >> 6 & 0x3)[:daqpar.NCh, None]
 
-    A = array(plDescr.t5.KoefADC)[gain + 0]           # OffsetCalibration
-    B = array(plDescr.t5.KoefADC)[gain + 4]           # ScaleCalibration
+    VRange = array([10.0, 2.5, 0.625, 0.15625], dtype=float32)[gain]
 
-    return (A + data14b) * B * VRange / 8000.0
+    koef = array(plDescr.t5.KoefADC, dtype=float32)
+    A = koef[gain + 0]                          # OffsetCalibration
+    B = koef[gain + 4]                          # ScaleCalibration
+
+    add(A, data14b, out=data14b)                #
+    multiply(data14b, B, out=data14b)           # Оптимизированная версия ...
+    multiply(data14b, VRange, out=data14b)      # ... (A + data14b) * B * VRange / 8000.0
+    divide(data14b, 8000.0, out=data14b)        #
+
+    return data14b
