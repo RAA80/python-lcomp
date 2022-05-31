@@ -131,11 +131,12 @@ if __name__ == "__main__":
             adcPar.t4.dKadr = 0.001
             adcPar.t4.SynchroType = e2010.INT_START_TRANS
             adcPar.t4.SynchroSrc = e2010.INT_CLK_TRANS
-            adcPar.t4.AdcIMask = e2010.SIG_0 | e2010.V30_0  # | e2010.SIG_1 | e2010.V30_1 # | e2010.SIG_2 | e2010.V30_2
-            adcPar.t4.NCh = 1   # 2 # 3
+            adcPar.t4.AdcIMask = e2010.SIG_0 | e2010.V30_0  # | e2010.SIG_1 | e2010.V10_1 # | e2010.SIG_2 | e2010.V03_2 # | e2010.GND_3
+            adcPar.t4.NCh = 1   # 2 # 3 # 4
             adcPar.t4.Chn[0] = e2010.CH_0
             # adcPar.t4.Chn[1] = e2010.CH_1
             # adcPar.t4.Chn[2] = e2010.CH_2
+            # adcPar.t4.Chn[3] = e2010.CH_3
             adcPar.t4.IrqEna = 1
             adcPar.t4.AdcEna = 1
 

@@ -84,26 +84,15 @@ class _AdcIMask(Union):
                 ("value", c_uint16)]
 
 def _gain_index(mask, channel):
-    if channel == 0:
-        if mask.SIG_0 & mask.V03_0: return 2
-        elif mask.SIG_0 & mask.V10_0: return 1
-        elif mask.SIG_0: return 0
-        else: return 0
-    elif channel == 1:
-        if mask.SIG_1 & mask.V03_1: return 2
-        elif mask.SIG_1 & mask.V10_1: return 1
-        elif mask.SIG_1: return 0
-        else: return 0
-    elif channel == 2:
-        if mask.SIG_2 & mask.V03_2: return 2
-        elif mask.SIG_2 & mask.V10_2: return 1
-        elif mask.SIG_2: return 0
-        else: return 0
-    elif channel == 3:
-        if mask.SIG_3 & mask.V03_3: return 2
-        elif mask.SIG_3 & mask.V10_3: return 1
-        elif mask.SIG_3: return 0
-        else: return 0
+    return {0: {mask.SIG_0 & mask.V03_0: 2,
+                mask.SIG_0 & mask.V10_0: 1},
+            1: {mask.SIG_1 & mask.V03_1: 2,
+                mask.SIG_1 & mask.V10_1: 1},
+            2: {mask.SIG_2 & mask.V03_2: 2,
+                mask.SIG_2 & mask.V10_2: 1},
+            3: {mask.SIG_3 & mask.V03_3: 2,
+                mask.SIG_3 & mask.V10_3: 1}
+           }[channel].get(True, 0)
 
 def GetDataADC(daqpar, plDescr, address, size):
     GetDataADC.tail = getattr(GetDataADC, "tail", [])
