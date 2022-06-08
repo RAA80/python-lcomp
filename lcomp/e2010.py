@@ -78,10 +78,12 @@ class _AdcIMask_bits(LittleEndianStructure):
                 ("V03_3", c_uint16, 1),
                 ("V10_2", c_uint16, 1)]
 
+
 class _AdcIMask(Union):
     _anonymous_ = ("bit",)
     _fields_ = [("bit", _AdcIMask_bits),
                 ("value", c_uint16)]
+
 
 def _gain_index(mask, channel):
     return {0: {mask.SIG_0 & mask.V03_0: 2,
@@ -93,6 +95,7 @@ def _gain_index(mask, channel):
             3: {mask.SIG_3 & mask.V03_3: 2,
                 mask.SIG_3 & mask.V10_3: 1}
            }[channel].get(True, 0)
+
 
 def GetDataADC(daqpar, plDescr, address, size):
     GetDataADC.tail = getattr(GetDataADC, "tail", [])

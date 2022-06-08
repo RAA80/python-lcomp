@@ -114,7 +114,8 @@ if __name__ == "__main__":
             print("    IrqEna:             {}".format(adcPar.t3.IrqEna))
             print("    AdcEna:             {}".format(adcPar.t3.AdcEna))
 
-            print("SetParametersStream: {}".format(ldev.SetParametersStream(adcPar.t3, buffer_size)))
+            data_ptr, syncd = ldev.SetParametersStream(adcPar.t3, buffer_size)
+            print("SetParametersStream: {}, {}".format(data_ptr, syncd))
             print("    Pages:   {}".format(adcPar.t3.Pages))
             print("    IrqStep: {}".format(adcPar.t3.IrqStep))
             print("    FIFO:    {}".format(adcPar.t3.FIFO))
@@ -165,7 +166,8 @@ if __name__ == "__main__":
             print("    IrqEna:      {}".format(adcPar.t4.IrqEna))
             print("    AdcEna:      {}".format(adcPar.t4.AdcEna))
 
-            print("SetParametersStream: {}".format(ldev.SetParametersStream(adcPar.t4, buffer_size)))
+            data_ptr, syncd = ldev.SetParametersStream(adcPar.t4, buffer_size)
+            print("SetParametersStream: {}, {}".format(data_ptr, syncd))
             print("    Pages:   {}".format(adcPar.t4.Pages))
             print("    IrqStep: {}".format(adcPar.t4.IrqStep))
             print("    FIFO:    {}".format(adcPar.t4.FIFO))
@@ -179,15 +181,15 @@ if __name__ == "__main__":
         try:
             print("Read data from buffer ...")
 
-            while ldev.syncd() < buffer_size:       # ждем, пока заполнится буфер
+            while syncd() < buffer_size:            # ждем, пока заполнится буфер
                 pass
 
             print("Data ready ...")
 
             if slPar.BoardType == E140:
-                x = e140.GetDataADC(adcPar.t3, plDescr, ldev.data, buffer_size)
+                x = e140.GetDataADC(adcPar.t3, plDescr, data_ptr, buffer_size)
             elif slPar.BoardType == E2010 or slPar.BoardType == E2010B:
-                x = e2010.GetDataADC(adcPar.t4, plDescr, ldev.data, buffer_size)
+                x = e2010.GetDataADC(adcPar.t4, plDescr, data_ptr, buffer_size)
 
             with open("channel-1.log", 'w') as fh:
                 fh.write(str(x[0].tolist()))        # индекс соответствует номеру канала из Chn

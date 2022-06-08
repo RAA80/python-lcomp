@@ -102,8 +102,7 @@ class IDaqLDevice(c_void_p):
 
 
 class LCOMP(object):
-    data = None         # адрес начала кольцевого буфера
-    syncd = None        # переменная синхронизации
+    ''' Python wrapper for lcomp library '''
 
     def __init__(self, slot):
         self._hIfc = None
@@ -239,10 +238,7 @@ class LCOMP(object):
         sync = pointer(c_ulong())
 
         if not self._ldev.SetParametersStream(self._hIfc, byref(daqpar), sp_type, byref(size), byref(data), byref(sync), self._stream_id):
-            self.data = data
-            self.syncd = lambda: sync.contents.value
-
-            return True
+            return data, lambda: sync.contents.value
 
     def InitStartLDevice(self):
         ''' Инициализация внутренних переменных драйвера перед началом сбора '''
