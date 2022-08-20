@@ -79,15 +79,16 @@ if __name__ == "__main__":
             adcPar.t3.AutoInit = 0
             adcPar.t3.dRate = 200.0
             adcPar.t3.dKadr = 0.005
-            adcPar.t3.SynchroType = 0
-            adcPar.t3.SynchroSensitivity = 0
-            adcPar.t3.SynchroMode = 0
+            adcPar.t3.SynchroType = e140.NO_SYNC
+            adcPar.t3.SynchroSensitivity = e140.A_SYNC_LEVEL
+            adcPar.t3.SynchroMode = e140.A_SYNC_UP_EDGE
             adcPar.t3.AdChannel = 0
             adcPar.t3.AdPorog = 0
-            adcPar.t3.NCh = 1   # 2 # 3
-            adcPar.t3.Chn[0] = 0x0
-            # adcPar.t3.Chn[1] = 0x1
-            # adcPar.t3.Chn[2] = 0x2
+            adcPar.t3.NCh = 1   # 2 # 3 # 4
+            adcPar.t3.Chn[0] = e140.CH_0 | e140.V10000
+            # adcPar.t3.Chn[1] = e140.CH_1 | e140.V2500
+            # adcPar.t3.Chn[2] = e140.CH_2 | e140.V0625
+            # adcPar.t3.Chn[3] = e140.CH_3 | e140.V0156
             adcPar.t3.IrqEna = 1
             adcPar.t3.AdcEna = 1
 

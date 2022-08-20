@@ -86,14 +86,14 @@ class _AdcIMask(Union):
 
 
 def _gain_index(mask, channel):
-    return {0: {mask.SIG_0 & mask.V03_0: 2,
-                mask.SIG_0 & mask.V10_0: 1},
-            1: {mask.SIG_1 & mask.V03_1: 2,
-                mask.SIG_1 & mask.V10_1: 1},
-            2: {mask.SIG_2 & mask.V03_2: 2,
-                mask.SIG_2 & mask.V10_2: 1},
-            3: {mask.SIG_3 & mask.V03_3: 2,
-                mask.SIG_3 & mask.V10_3: 1}
+    return {CH_0: {mask.SIG_0 & mask.V03_0: 2,
+                   mask.SIG_0 & mask.V10_0: 1},
+            CH_1: {mask.SIG_1 & mask.V03_1: 2,
+                   mask.SIG_1 & mask.V10_1: 1},
+            CH_2: {mask.SIG_2 & mask.V03_2: 2,
+                   mask.SIG_2 & mask.V10_2: 1},
+            CH_3: {mask.SIG_3 & mask.V03_3: 2,
+                   mask.SIG_3 & mask.V10_3: 1}
            }[channel].get(True, 0)
 
 

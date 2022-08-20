@@ -10,35 +10,48 @@ _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
 
 
-V_RESET_DSP_E140       = 0
-V_PUT_ARRAY_E140       = 1
-V_GET_ARRAY_E140       = 2
-V_START_ADC_E140       = 3
-V_STOP_ADC_E140        = 4
-V_START_ADC_ONCE_E140  = 5
-V_START_DAC_E140       = 6
-V_STOP_DAC_E140        = 7
-V_GET_MODULE_NAME_E140 = 11
+# диапазон входного напряжения модуля E140
+V10000 = 0                  # диапазон 10В
+V2500  = 64                 # диапазон 2.5В
+V0625  = 128                # диапазон 0.625В
+V0156  = 192                # диапазон 0.15625В
 
-L_ADC_PARS_BASE_E140 = 0x0060
-L_ADC_ONCE_FLAG_E140 = L_ADC_PARS_BASE_E140 + 136
-L_FLASH_ENABLED_E140 = L_ADC_PARS_BASE_E140 + 137
-L_DAC_PARS_BASE_E140 = 0x0160
+# тип канала E140
+CH_DIFF = 0                 # дифференциальный канал
+CH_NULL = 16                # калибровка нуля
+CH_GRND = 32                # канал с общей землей
 
-L_TTL_OUT_E140            = 0x0400
-L_TTL_IN_E140             = 0x0400
-L_ENABLE_TTL_OUT_E140     = 0x0402
-L_ADC_SAMPLE_E140         = 0x0410
-L_ADC_CHANNEL_SELECT_E140 = 0x0412
-L_ADC_START_E140          = 0x0413
-L_DAC_SAMPLE_E140         = 0x0420
-L_DAC_SAMPLES_E140        = 0x0428
-L_SUSPEND_MODE_E140       = 0x0430
-L_DATA_FLASH_BASE_E140    = 0x0800
-L_CODE_FLASH_BASE_E140    = 0x1000
-L_BIOS_VERSION_E140       = 0x1080
-L_DESCRIPTOR_BASE_E140    = 0x2780
-L_RAM_E140                = 0x8000
+# тип синхронизации E140
+NO_SYNC        = 0          # нет синхронизации
+TTL_START_SYNC = 1          # цифровая синхронизация старта, остальные параметры синхронизации не используются
+TTL_KADR_SYNC  = 2          # по-кадровая синхронизация, остальные параметры синхронизации не используются
+ANALOG_SYNC    = 3          # аналоговая синхронизация старта по выбранному каналу АЦП
+
+# вид синхронизации E140
+A_SYNC_LEVEL = 0            # аналоговая синхронизация по уровню
+A_SYNC_EDGE  = 1            # аналоговая синхронизация по переходу
+
+# режим синхронизации E140
+A_SYNC_UP_EDGE   = 0        # по уровню «выше» или переходу «снизу-вверх»
+A_SYNC_DOWN_EDGE = 1        # по уровню «ниже» или переходу «сверху-вниз»
+
+# номер канала E140
+CH_0  = 0
+CH_1  = 1
+CH_2  = 2
+CH_3  = 3
+CH_4  = 4
+CH_5  = 5
+CH_6  = 6
+CH_7  = 7
+CH_8  = 8
+CH_9  = 9
+CH_10 = 10
+CH_11 = 11
+CH_12 = 12
+CH_13 = 13
+CH_14 = 14
+CH_15 = 15
 
 
 def GetDataADC(daqpar, plDescr, address, size):
