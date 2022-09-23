@@ -7,8 +7,8 @@ from lcomp.ldevioctl import (E140, E2010, E2010B, L_STREAM_ADC, WDAQ_PAR,
                              L_ADC_PARAM, ASYNC_PAR, L_ASYNC_DAC_OUT,
                              L_ASYNC_ADC_INP, L_ASYNC_TTL_CFG, L_ASYNC_TTL_INP,
                              L_ASYNC_TTL_OUT, L_BOARD_TYPE, L_USER_BASE)
-import lcomp.e140 as e140
-import lcomp.e2010 as e2010
+import lcomp.device.e140 as e140
+import lcomp.device.e2010 as e2010
 
 logging.basicConfig(level=logging.INFO)
 
@@ -54,7 +54,7 @@ if __name__ == "__main__":
             print("    Quartz:       {}".format(plDescr.t5.Quartz))
             # print("    KoefADC:      {}".format(list(plDescr.t5.KoefADC)))
             # print("    KoefDAC:      {}".format(list(plDescr.t5.KoefDAC)))
-        elif slPar.BoardType == E2010 or slPar.BoardType == E2010B:
+        elif slPar.BoardType in [E2010, E2010B]:
             print("    SerNum:       {}".format(plDescr.t6.SerNum))
             print("    BrdName:      {}".format(plDescr.t6.BrdName))
             print("    Rev:          {}".format(plDescr.t6.Rev))
@@ -121,7 +121,7 @@ if __name__ == "__main__":
             print("    IrqStep: {}".format(adcPar.t3.IrqStep))
             print("    FIFO:    {}".format(adcPar.t3.FIFO))
             print("    Rate:    {}".format(adcPar.t3.dRate))
-        elif slPar.BoardType == E2010 or slPar.BoardType == E2010B:
+        elif slPar.BoardType in [E2010, E2010B]:
             adcPar = WDAQ_PAR()
 
             adcPar.t4.s_Type = L_ADC_PARAM
@@ -179,28 +179,24 @@ if __name__ == "__main__":
         print("InitStartLDevice: {}".format(ldev.InitStartLDevice()))
         print("StartLDevice: {}".format(ldev.StartLDevice()))
 
-        try:
-            print("Read data from buffer ...")
+        print("Read data from buffer ...")
 
-            while syncd() < buffer_size:            # ждем, пока заполнится буфер
-                pass
-
-            print("Data ready ...")
-
-            if slPar.BoardType == E140:
-                x = e140.GetDataADC(adcPar.t3, plDescr, data_ptr, buffer_size)
-            elif slPar.BoardType == E2010 or slPar.BoardType == E2010B:
-                x = e2010.GetDataADC(adcPar.t4, plDescr, data_ptr, buffer_size)
-
-            with open("channel-1.log", 'w') as fh:
-                fh.write(str(x[0].tolist()))        # индекс соответствует номеру канала из Chn
-            # with open("channel-2.log", 'w') as fh:
-            #     fh.write(str(x[1].tolist()))
-            # with open("channel-3.log", 'w') as fh:
-            #     fh.write(str(x[2].tolist()))
-
-        except KeyboardInterrupt:
+        while syncd() < buffer_size:            # ждем, пока заполнится буфер
             pass
+
+        print("Data ready ...")
+
+        if slPar.BoardType == E140:
+            x = e140.GetDataADC(adcPar.t3, plDescr, data_ptr, buffer_size)
+        elif slPar.BoardType in [E2010, E2010B]:
+            x = e2010.GetDataADC(adcPar.t4, plDescr, data_ptr, buffer_size)
+
+        with open("channel-1.log", 'w') as fh:
+            fh.write(str(x[0].tolist()))        # индекс соответствует номеру канала из Chn
+        # with open("channel-2.log", 'w') as fh:
+        #     fh.write(str(x[1].tolist()))
+        # with open("channel-3.log", 'w') as fh:
+        #     fh.write(str(x[2].tolist()))
 
         print("StopLDevice: {}".format(ldev.StopLDevice()))
 
