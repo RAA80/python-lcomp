@@ -6,7 +6,7 @@ from lcomp.lcomp import LCOMP
 from lcomp.ldevioctl import (E140, E2010, E2010B, L_STREAM_ADC, WDAQ_PAR,
                              L_ADC_PARAM, ASYNC_PAR, L_ASYNC_DAC_OUT,
                              L_ASYNC_ADC_INP, L_ASYNC_TTL_CFG, L_ASYNC_TTL_INP,
-                             L_ASYNC_TTL_OUT, L_BOARD_TYPE, L_USER_BASE)
+                             L_ASYNC_TTL_OUT, L_USER_BASE)
 import lcomp.device.e140 as e140
 import lcomp.device.e2010 as e2010
 
@@ -14,8 +14,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 if __name__ == "__main__":
-    ldev = LCOMP(slot=0)
-    with ldev:      # либо ldev.OpenLDevice() в начале и ldev.CloseLDevice() в конце
+    with LCOMP(slot=0) as ldev:     # либо ldev.OpenLDevice() в начале и ldev.CloseLDevice() в конце
         print("LoadBios: {}".format(ldev.LoadBios("e2010m")))      # для E2010 биос "e2010", для E2010B биос "e2010m"
         print("PlataTest: {}".format(ldev.PlataTest()))
 
@@ -232,7 +231,6 @@ if __name__ == "__main__":
 
         # Проверка работоспособности других функций
 
-        print("GetParameter (L_BOARD_TYPE): {}".format(ldev.GetParameter(name=L_BOARD_TYPE)))
         print("SetParameter (L_USER_BASE): {}".format(ldev.SetParameter(name=L_USER_BASE, value=123)))
         print("GetParameter (L_USER_BASE): {}".format(ldev.GetParameter(name=L_USER_BASE)))
         print("ReadFlashWord: {}".format(ldev.ReadFlashWord(address=L_USER_BASE)))

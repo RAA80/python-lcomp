@@ -60,21 +60,21 @@ L_STREAM_TTLOUT = 4
 L_STREAM_FMETER = 5
 L_STREAM_DDS    = 6
 
-L_MEM_ALLOC     = 10    # смещение в массиве overlapped структур для overlapped аллокатора пямяти + stream_id
+L_MEM_ALLOC     = 10        # смещение в массиве overlapped структур для overlapped аллокатора пямяти + stream_id
 
-L_STREAM_ADC_ERROR = 0  # ERROR BITS FOR _EX interface + 0x20000000 for actual code
-L_STREAM_DAC_ERROR = 1  # ERROR BITS FOR _EX interface + 0x20000000 for actual code
+L_STREAM_ADC_ERROR = 0      # ERROR BITS FOR _EX interface + 0x20000000 for actual code
+L_STREAM_DAC_ERROR = 1      # ERROR BITS FOR _EX interface + 0x20000000 for actual code
 
 # define s_Type for FillDAQparameters
-L_ADC_PARAM     = 1     # трактовать DAQ_PAR как ADC_PAR при передаче в FillDAQparameters
-L_DAC_PARAM     = 2     # трактовать DAQ_PAR как DAC_PAR при передаче в FillDAQparameters
-L_ASYNC_ADC_CFG = 3     # ASYNC_PAR содержит запрос на конфигурирование АЦП
-L_ASYNC_TTL_CFG = 4     # ASYNC_PAR содержит запрос на конфигурирование цифровых линий
-L_ASYNC_DAC_CFG = 5     # ASYNC_PAR содержит запрос на конфигурирование ЦАП
-L_ASYNC_ADC_INP = 6     # ASYNC_PAR содержит запрос на ввод данных с АЦП
-L_ASYNC_TTL_INP = 7     # ASYNC_PAR содержит запрос на ввод данных с цифровых линий
-L_ASYNC_TTL_OUT = 8     # ASYNC_PAR содержит запрос на вывод данных на цифровые линии
-L_ASYNC_DAC_OUT = 9     # ASYNC_PAR содержит запрос на вывод данных на ЦАП
+L_ADC_PARAM     = 1         # трактовать DAQ_PAR как ADC_PAR при передаче в FillDAQparameters
+L_DAC_PARAM     = 2         # трактовать DAQ_PAR как DAC_PAR при передаче в FillDAQparameters
+L_ASYNC_ADC_CFG = 3         # ASYNC_PAR содержит запрос на конфигурирование АЦП
+L_ASYNC_TTL_CFG = 4         # ASYNC_PAR содержит запрос на конфигурирование цифровых линий
+L_ASYNC_DAC_CFG = 5         # ASYNC_PAR содержит запрос на конфигурирование ЦАП
+L_ASYNC_ADC_INP = 6         # ASYNC_PAR содержит запрос на ввод данных с АЦП
+L_ASYNC_TTL_INP = 7         # ASYNC_PAR содержит запрос на ввод данных с цифровых линий
+L_ASYNC_TTL_OUT = 8         # ASYNC_PAR содержит запрос на вывод данных на цифровые линии
+L_ASYNC_DAC_OUT = 9         # ASYNC_PAR содержит запрос на вывод данных на ЦАП
 L_ASYNC_FREQ_IN = 10
 L_DDS_FM_PARAM  = 11
 
@@ -109,8 +109,9 @@ class PORT_PAR(Structure):
     ]
 
 
-# Структура описывает параметры виртуального слота
 class SLOT_PAR(Structure):
+    """ Структура, описывающая параметры виртуального слота """
+
     _pack_ = 1
     _fields_ = [
         ('Base', c_uint),           # базовый адрес первого региона портов
@@ -137,6 +138,8 @@ class SLOT_PAR(Structure):
 
 
 class PLATA_DESCR(Structure):
+    """ Структура, описывающая FLASH на PCI платах L-761/L-780/L-783 """
+
     _pack_ = 1
     _fields_ = [
         ('SerNum', c_char * 9),           # серийный номер платы
@@ -153,6 +156,8 @@ class PLATA_DESCR(Structure):
 
 
 class PLATA_DESCR_1450(Structure):
+    """ Структура, описывающая FLASH на ISA плате L-1450 """
+
     _pack_ = 1
     _fields_ = [
         ('SerNum', c_char * 9),           # серийный номер платы
@@ -160,7 +165,7 @@ class PLATA_DESCR_1450(Structure):
         ('Rev', c_char),                  # ревизия платы
         ('DspType', c_char * 5),          # тип DSP
         ('IsDacPresent', c_char),         # наличие ЦАП
-        ('IsExtMemPresent', c_char),
+        ('IsExtMemPresent', c_char),      # наличие внешней памяти данных
         ('Quartz', c_uint),               # частота кварца
         ('Reserv1', c_ushort * 6),        # зарезервировано
         ('KoefADC', c_ushort * 8),        # калибровочные коэф. АЦП
@@ -169,8 +174,9 @@ class PLATA_DESCR_1450(Structure):
     ]
 
 
-# Структура описывает FLASH на PCI плате L-791
 class PLATA_DESCR_L791(Structure):
+    """ Структура, описывающая FLASH на PCI плате L-791 """
+
     _pack_ = 1
     _fields_ = [
         ('CRC16', c_ushort),              # контрольная сумма
@@ -186,8 +192,9 @@ class PLATA_DESCR_L791(Structure):
     ]
 
 
-# Структура описывает FLASH на USB модуле E14-440
 class PLATA_DESCR_E440(Structure):
+    """ Структура, описывающая FLASH на USB модуле E14-440 """
+
     _pack_ = 1
     _fields_ = [
         ('SerNum', c_char * 9),           # серийный номер платы
@@ -203,8 +210,9 @@ class PLATA_DESCR_E440(Structure):
     ]
 
 
-# Структура описывает FLASH на USB модуле E14-140
 class PLATA_DESCR_E140(Structure):
+    """ Структура, описывающая FLASH на USB модуле E14-140 """
+
     _pack_ = 1
     _fields_ = [
         ('SerNum', c_char * 9),           # серийный номер платы
@@ -241,8 +249,9 @@ class PACKED_PLATA_DESCR_E140(Structure):
     ]
 
 
-# Структура описывает FLASH на USB модуле E20-10
 class PLATA_DESCR_E2010(Structure):
+    """ Структура, описывающая FLASH на USB модуле E20-10 """
+
     _pack_ = 1
     _fields_ = [
         ('BrdName', c_char * 16),         # название платы
@@ -258,8 +267,9 @@ class PLATA_DESCR_E2010(Structure):
     ]
 
 
-# Структура описывает FLASH на USB модуле E154
 class PLATA_DESCR_E154(Structure):
+    """ Структура, описывающая FLASH на USB модуле E154 """
+
     _pack_ = 1
     _fields_ = [
         ('SerNum', c_char * 9),           # серийный номер платы
@@ -297,6 +307,8 @@ class PACKED_PLATA_DESCR_E154(Structure):
 
 
 class PLATA_DESCR_E310(Structure):
+    """ Структура, описывающая FLASH на модуле E310 """
+
     _pack_ = 1
     _fields_ = [
         ('BrdName', c_char * 16),         # название платы
@@ -310,6 +322,8 @@ class PLATA_DESCR_E310(Structure):
 
 
 class WORD_IMAGE(Structure):
+    """ Представление структуры FLASH в виде массива слов """
+
     _pack_ = 1
     _fields_ = [
         ('data', c_ushort * 64)
@@ -337,8 +351,9 @@ class BYTE_IMAGE_256(Structure):
     ]
 
 
-# Это обобщенная структура для удобства работы с флешами разных плат
 class PLATA_DESCR_U(Union):
+    """ Обобщенная структура для удобства работы с флешами разных плат """
+
     _pack_ = 1
     _fields_ = [
         ('t1', PLATA_DESCR),
@@ -352,8 +367,9 @@ class PLATA_DESCR_U(Union):
     ]
 
 
-# Это обобщенная структура для удобства работы с флешами разных плат
 class PLATA_DESCR_U2(Union):
+    """ Обобщенная структура для удобства работы с флешами разных плат """
+
     _pack_ = 1
     _fields_ = [
         ('t1', PLATA_DESCR),
@@ -383,8 +399,9 @@ class IOCTL_BUFFER(Structure):
     ]
 
 
-# Базовая структура для описания параметров сбора данных
 class DAQ_PAR(Structure):
+    """ Базовая структура для описания параметров сбора данных """
+
     _pack_ = 1
     _fields_ = [
         ('s_Type', c_uint),                 # тип структуры
@@ -394,8 +411,9 @@ class DAQ_PAR(Structure):
     ]
 
 
-# Структура служит для передачи параметров сбора данных в плату
 class ADC_PAR_0(DAQ_PAR):
+    """ Структура, служащая для передачи параметров сбора данных в плату """
+
     _pack_ = 1
     _fields_ = [
         ('AutoInit', c_uint),               # флаг, указывающий на тип сбора данных 0 - однократный 1 - циклический
@@ -418,8 +436,9 @@ class ADC_PAR_0(DAQ_PAR):
     ]
 
 
-# Структура служит для передачи параметров сбора данных в плату
 class ADC_PAR_1(DAQ_PAR):
+    """ Структура, служащая для передачи параметров сбора данных в плату """
+
     _pack_ = 1
     _fields_ = [
         ('AutoInit', c_uint),               # флаг, указывающий на тип сбора данных 0 - однократный 1 - циклический
@@ -444,8 +463,11 @@ class ADC_PAR_1(DAQ_PAR):
     ]
 
 
-# Это обобщенная структура для удобства работы со структурами задачи параметров сбора данных разных плат
 class ADC_PAR(Union):
+    """ Обобщенная структура для удобства работы со структурами задачи
+        параметров сбора данных разных плат
+    """
+
     _pack_ = 1
     _fields_ = [
         ('t1', ADC_PAR_0),
@@ -453,8 +475,9 @@ class ADC_PAR(Union):
     ]
 
 
-# Cтруктура для передачи параметров работы ЦАП в потоковом режиме
 class DAC_PAR_0(DAQ_PAR):
+    """ Cтруктура для передачи параметров работы ЦАП в потоковом режиме """
+
     _pack_ = 1
     _fields_ = [
         ('AutoInit', c_uint),               # флаг указывающий на тип сбора/выдачи данных 0 - однократный 1 - циклический; (пока не используется)
@@ -467,6 +490,8 @@ class DAC_PAR_0(DAQ_PAR):
 
 
 class DAC_PAR_1(DAQ_PAR):
+    """ Cтруктура для передачи параметров работы ЦАП в потоковом режиме """
+
     _pack_ = 1
     _fields_ = [
         ('AutoInit', c_uint),               # флаг указывающий на тип сбора данных 0 - однократный 1 - циклический; (пока не используется)
@@ -478,8 +503,9 @@ class DAC_PAR_1(DAQ_PAR):
     ]
 
 
-# Обобщенная структура для удобства работы со структурами праметров ЦАП
 class DAC_PAR(Union):
+    """ Обобщенная структура для удобства работы со структурами праметров ЦАП """
+
     _pack_ = 1
     _fields_ = [
         ('t1', DAC_PAR_0),
@@ -593,8 +619,9 @@ class WDAQ_PAR(Union):
     ]
 
 
-# Cтруктура для передачи параметров асинхронного сбора/выдачи данных при вызове IoAsync
 class ASYNC_PAR(DAQ_PAR):
+    """ Cтруктура для передачи параметров асинхронного сбора/выдачи данных при вызове IoAsync """
+
     _pack_ = 1
     _fields_ = [
         ('dRate', c_double),                # частота опроса каналов в кадре (кГц)
