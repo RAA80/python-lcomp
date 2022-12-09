@@ -3,8 +3,8 @@
 
 import logging
 from ctypes import cast, POINTER, c_ushort
-from numpy import (array, frombuffer, int16, putmask, insert, multiply, divide,
-                   float32, split, add)
+from numpy import (array, frombuffer, int16, insert, multiply, divide, float32,
+                   split, add, where)
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -54,7 +54,9 @@ CH_14 = 14
 CH_15 = 15
 
 
-def GetDataADC(daqpar, plDescr, address, size):
+def GetDataADC(daqpar, descr, address, size):
+    ''' Чтение данных из буфера. Преобразование кодов АЦП в вольты '''
+
     GetDataADC.tail = getattr(GetDataADC, "tail", [])
 
     arr_ptr = cast(address, POINTER(c_ushort * size))[0]
@@ -62,17 +64,19 @@ def GetDataADC(daqpar, plDescr, address, size):
     dataraw = insert(frombuffer(arr_ptr, int16), 0, GetDataADC.tail)
     dataraw, GetDataADC.tail = split(dataraw, [dataraw.size - dataraw.size % daqpar.NCh,])
     data14b = dataraw.reshape((daqpar.NCh, -1), order='F') & 0x3FFF
-    putmask(data14b, data14b > 8192, data14b - 16384)
+    data14b = where(data14b > 8192, data14b - 16384, data14b)
 
-    if data14b[(data14b > 8000) | (data14b < -8000)].any():
-        _logger.warning("Channel overload detected !!!")
+    overload = (data14b > 8000) | (data14b < -8000)
+    over_chn = [ch for ch in range(overload.shape[0]) if overload[ch].any()]
+    if over_chn:
+        _logger.warning("Channels %s overload detected !!!", over_chn)
     data14b = data14b.astype(float32)
 
     gain = (array(daqpar.Chn) >> 6 & 0x3)[:daqpar.NCh, None]
 
     VRange = array([10.0, 2.5, 0.625, 0.15625], dtype=float32)[gain]
 
-    koef = array(plDescr.t5.KoefADC, dtype=float32)
+    koef = array(descr.t5.KoefADC, dtype=float32)
     A = koef[gain + 0]                          # OffsetCalibration
     B = koef[gain + 4]                          # ScaleCalibration
 
