@@ -7,8 +7,8 @@ from lcomp.ldevioctl import (E140, E2010, E2010B, L_STREAM_ADC, WDAQ_PAR,
                              L_ADC_PARAM, ASYNC_PAR, L_ASYNC_DAC_OUT,
                              L_ASYNC_ADC_INP, L_ASYNC_TTL_CFG, L_ASYNC_TTL_INP,
                              L_ASYNC_TTL_OUT, L_USER_BASE)
-import lcomp.device.e140 as e140
-import lcomp.device.e2010 as e2010
+from lcomp.device import e140
+from lcomp.device import e2010
 
 logging.basicConfig(level=logging.INFO)
 
