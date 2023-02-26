@@ -321,6 +321,55 @@ class PLATA_DESCR_E310(Structure):
     ]
 
 
+class E310_HW_PARAM(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('DDS_CtrlReg', c_ushort),
+        ('IncStepsReg', c_ushort),
+        ('LoDeltaFreqReg', c_ushort),
+        ('HiDeltaFreqReg', c_ushort),
+        ('IncIntervalReg', c_ushort),
+        ('LoStartFreqReg', c_ushort),
+        ('HiStartFreqReg', c_ushort),
+        ('LoStopFreqReg', c_ushort),
+        ('HiStopFreqReg', c_ushort),
+        ('AutoScanType', c_ubyte),
+        ('MasterClock', c_double),
+        ('Reserved0', c_ubyte * 15),
+        ('CtrlReg', c_ubyte),
+        ('OUT_10_OFFSET', c_ushort),
+        ('FM_POROG', c_ushort),
+        ('FM_Ena', c_ubyte),
+        ('FM_Mode', c_ubyte),
+        ('FM_InDiv', c_ubyte),
+        ('FM_BCR_DivIdx', c_ubyte),
+        ('FM_ClockRate', c_uint),
+        ('FM_BCR', c_uint),
+        ('Reserved1', c_ubyte * 21)
+    ]
+
+
+class E310_TTL_PARAM(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('Mode', c_ubyte),
+        ('Param', c_ushort),
+        ('inTTL', c_ushort),
+        ('outTTL', c_ushort),
+        ('outTTL', c_ushort),
+        ('Reserved', c_ubyte * 9)
+    ]
+
+
+class E310_ADC_PARAM(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('StartSrc', c_ubyte),
+        ('ChMask', c_ubyte),
+        ('Reserved', c_ubyte * 5)
+    ]
+
+
 class WORD_IMAGE(Structure):
     """ Представление структуры FLASH в виде массива слов """
 
@@ -381,7 +430,7 @@ class PLATA_DESCR_U2(Union):
         ('t6', PLATA_DESCR_E2010),
         ('t7', PLATA_DESCR_E154),
         ('pt7', PACKED_PLATA_DESCR_E154),
-        # ('pt8', PLATA_DESCR_E310),
+        ('pt8', PLATA_DESCR_E310),
         ('wi', WORD_IMAGE),
         ('bi', BYTE_IMAGE),
         ('wi256', WORD_IMAGE_256),
@@ -390,6 +439,8 @@ class PLATA_DESCR_U2(Union):
 
 
 class IOCTL_BUFFER(Structure):
+    """ Структура для доступа через ioctl """
+
     _pack_ = 1
     _fields_ = [
         ('inSize', c_int),                  # size in bytes
@@ -503,13 +554,50 @@ class DAC_PAR_1(DAQ_PAR):
     ]
 
 
+class DAC_PAR_2(DAQ_PAR):
+    _pack_ = 1
+    _fields_ = [
+        ('MasterClk', c_double),
+        ('MasterSrc', c_ushort),
+        ('DDS_CtrlReg', c_ushort),
+        ('CyclicScan', c_ubyte),
+        ('ScanSteps', c_ushort),
+        ('ScanFreqInc', c_double),
+        ('ScanPeriodBase', c_ushort),
+        ('ScanPeriodQnt', c_ushort),
+        ('ScanPeriodMult', c_ushort),
+        ('StartFreq', c_double),
+        ('StopFreq', c_double),
+        ('SyncOutType', c_ushort),
+        ('SyncOutEna', c_ushort),
+        ('TTLWaveEna', c_ubyte),
+        ('IRQLineType', c_ubyte),
+        ('ScanIncType', c_ushort),
+        ('ScanCtrlType', c_ubyte),
+        ('SignalForm', c_ushort),
+        ('Out10_offset', c_double),
+        ('Out10_offsrc', c_ubyte),
+        ('OutGain', c_ubyte),
+        ('FM_POROG', c_double),
+        ('FM_Ena', c_ubyte),
+        ('FM_Mode', c_ubyte),
+        ('FM_InDiv', c_ubyte),
+        ('FM_BCR_DivIdx', c_ubyte),
+        ('FM_ClockRate', c_uint),
+        ('FM_BCR', c_uint),
+        ('Reserved1', c_ubyte * 21),
+        ('dds_fm', E310_HW_PARAM)
+    ]
+
+
 class DAC_PAR(Union):
     """ Обобщенная структура для удобства работы со структурами параметров ЦАП """
 
     _pack_ = 1
     _fields_ = [
         ('t1', DAC_PAR_0),
-        ('t2', DAC_PAR_1)
+        ('t2', DAC_PAR_1),
+        ('t3', DAC_PAR_2)
     ]
 
 

@@ -213,7 +213,7 @@ class LCOMP(object):
         ''' Выделение памяти под большой кольцевой буфер '''
 
         size = c_uint(size)
-        self._stream_id = stream_id
+        self._stream_id = c_uint(stream_id)
 
         if not self._ldev.RequestBufferStream(self._ifc, byref(size), self._stream_id):
             return size.value

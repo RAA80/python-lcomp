@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from ctypes import cast, POINTER, c_ushort, LittleEndianStructure, Union, c_uint16
+from ctypes import cast, POINTER, c_ushort
 from numpy import (array, frombuffer, int16, insert, multiply, divide, float32,
                    split, add, where)
 
@@ -36,24 +36,24 @@ GND_3 = 0x0000      # вход заземлен для 3 канала
 SIG_3 = 0x0800      # вход подключен к сигналу для 3 канала
 
 # тип синхронизации E2010
-INT_START_TRANS     = 0x01          # внутренний старт с разрешением трансляции сигнала на разъем
-INT_START           = 0x81          # просто внутренний старт
-EXT_START_UP        = 0x84          # внешний импульс старта по переднему фронту
-EXT_START_DOWN      = 0x94          # внешний импульс старта по заднему фронту
-EXT_START_DOWN_REVB = 0x8C          # внешний импульс старта по заднему фронту для ревизии B
+INT_START_TRANS     = 0x01      # внутренний старт с разрешением трансляции сигнала на разъем
+INT_START           = 0x81      # просто внутренний старт
+EXT_START_UP        = 0x84      # внешний импульс старта по переднему фронту
+EXT_START_DOWN      = 0x94      # внешний импульс старта по заднему фронту
+EXT_START_DOWN_REVB = 0x8C      # внешний импульс старта по заднему фронту для ревизии B
 
 # источник тактовых импульсов для АЦП E2010
-INT_CLK_TRANS = 0x00                # внутренний источник с трансляцией
-INT_CLK       = 0x40                # просто внутренний источник
-EXT_CLK_UP    = 0x42                # внешний источник, по переднему фронту
-EXT_CLK_DOWN  = 0x62                # внешний источник, по заднему фронту
+INT_CLK_TRANS = 0x00            # внутренний источник с трансляцией
+INT_CLK       = 0x40            # просто внутренний источник
+EXT_CLK_UP    = 0x42            # внешний источник, по переднему фронту
+EXT_CLK_DOWN  = 0x62            # внешний источник, по заднему фронту
 
 # режим аналоговой синхронизации и номер канала E2010
-A_SYNC_OFF       = 0x0000           # нет аналоговой синхронизации
-A_SYNC_UP_EDGE   = 0x0080           # синхронизация по переднему фронту
-A_SYNC_DOWN_EDGE = 0x0084           # синхронизация по заднему фронту
-A_SYNC_HL_LEVEL  = 0x0088           # синхронизация по положительному уровню
-A_SYNC_LH_LEVEL  = 0x008C           # синхронизация по отрицательно уровню
+A_SYNC_OFF       = 0x0000       # нет аналоговой синхронизации
+A_SYNC_UP_EDGE   = 0x0080       # синхронизация по переднему фронту
+A_SYNC_DOWN_EDGE = 0x0084       # синхронизация по заднему фронту
+A_SYNC_HL_LEVEL  = 0x0088       # синхронизация по положительному уровню
+A_SYNC_LH_LEVEL  = 0x008C       # синхронизация по отрицательно уровню
 
 # номер канала E2010
 CH_0 = 0x00
@@ -62,38 +62,15 @@ CH_2 = 0x02
 CH_3 = 0x03
 
 
-class _AdcIMask_bits(LittleEndianStructure):
-    _fields_ = [("_",     c_uint16, 1),
-                ("V10_1", c_uint16, 1),
-                ("V03_1", c_uint16, 1),
-                ("V10_0", c_uint16, 1),
-                ("V03_0", c_uint16, 1),
-                ("_",     c_uint16, 3),
-                ("V03_2", c_uint16, 1),
-                ("SIG_1", c_uint16, 1),
-                ("SIG_0", c_uint16, 1),
-                ("SIG_3", c_uint16, 1),
-                ("SIG_2", c_uint16, 1),
-                ("V10_3", c_uint16, 1),
-                ("V03_3", c_uint16, 1),
-                ("V10_2", c_uint16, 1)]
-
-
-class _AdcIMask(Union):
-    _anonymous_ = ("bit",)
-    _fields_ = [("bit", _AdcIMask_bits),
-                ("value", c_uint16)]
-
-
 def _gain_index(mask, channel):
-    return {CH_0: {mask.SIG_0 & mask.V03_0: 2,
-                   mask.SIG_0 & mask.V10_0: 1},
-            CH_1: {mask.SIG_1 & mask.V03_1: 2,
-                   mask.SIG_1 & mask.V10_1: 1},
-            CH_2: {mask.SIG_2 & mask.V03_2: 2,
-                   mask.SIG_2 & mask.V10_2: 1},
-            CH_3: {mask.SIG_3 & mask.V03_3: 2,
-                   mask.SIG_3 & mask.V10_3: 1}
+    return {CH_0: {bool(mask & SIG_0 and mask & V03_0): 2,
+                   bool(mask & SIG_0 and mask & V10_0): 1},
+            CH_1: {bool(mask & SIG_1 and mask & V03_1): 2,
+                   bool(mask & SIG_1 and mask & V10_1): 1},
+            CH_2: {bool(mask & SIG_2 and mask & V03_2): 2,
+                   bool(mask & SIG_2 and mask & V10_2): 1},
+            CH_3: {bool(mask & SIG_3 and mask & V03_3): 2,
+                   bool(mask & SIG_3 and mask & V10_3): 1}
            }[channel].get(True, 0)
 
 
@@ -105,7 +82,7 @@ def GetDataADC(daqpar, descr, address, size):
     arr_ptr = cast(address, POINTER(c_ushort * size))[0]
 
     dataraw = insert(frombuffer(arr_ptr, int16), 0, GetDataADC.tail)
-    dataraw, GetDataADC.tail = split(dataraw, [dataraw.size - dataraw.size % daqpar.NCh,])
+    dataraw, GetDataADC.tail = split(dataraw, [dataraw.size - dataraw.size % daqpar.NCh])
     data14b = dataraw.reshape((daqpar.NCh, -1), order='F') & 0x3FFF
     data14b = where(data14b > 8192, data14b - 16384, data14b)
 
@@ -115,10 +92,8 @@ def GetDataADC(daqpar, descr, address, size):
         _logger.warning("Channels %s overload detected !!!", over_chn)
     data14b = data14b.astype(float32)
 
-    mask = _AdcIMask()
-    mask.value = daqpar.AdcIMask
-    gain = array([_gain_index(mask, daqpar.Chn[ch]) for ch in range(daqpar.NCh)])[:daqpar.NCh, None]
-
+    gain = array([_gain_index(daqpar.AdcIMask, daqpar.Chn[ch])
+                  for ch in range(daqpar.NCh)])[:daqpar.NCh, None]
     VRange = array([3.0, 1.0, 0.3], dtype=float32)[gain]
 
     if descr.t6.Rev == "A":
