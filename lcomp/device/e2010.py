@@ -101,12 +101,10 @@ def GetDataADC(daqpar, descr, address, size):
         A = koef[gain + 0]                          # OffsetCalibration
         B = koef[gain + 12]                         # ScaleCalibration
 
-        add(A, data14b, out=data14b)                #
-        multiply(data14b, B, out=data14b)           # Оптимизированная версия ...
-        multiply(data14b, VRange, out=data14b)      # ... (A + data14b) * B * VRange / 8000.0
-        divide(data14b, 8000.0, out=data14b)        #
-    else:
-        multiply(data14b, VRange, out=data14b)      # Оптимизированная версия ...
-        divide(data14b, 8000.0, out=data14b)        # ... data14b * VRange / 8000.0
+        add(A, data14b, out=data14b)
+        multiply(data14b, B, out=data14b)
+
+    multiply(data14b, VRange, out=data14b)
+    divide(data14b, 8000.0, out=data14b)
 
     return data14b

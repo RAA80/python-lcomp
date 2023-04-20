@@ -29,11 +29,12 @@ elif os.name == "nt":
         _wlib = _load_lib("wlcomp.dll")
         _lib = _load_lib("lcomp.dll")
         _hdll = pointer(c_uint(_lib._handle))
+        _ifc_type = lambda x: pointer(c_uint(x))
     elif platform.architecture()[0] == '64bit':
         _wlib = _load_lib("wlcomp64.dll")
         _lib = _load_lib("lcomp64.dll")
         _hdll = pointer(c_ulonglong(_lib._handle))
-    _ifc_type = lambda x: pointer(c_uint(x))
+        _ifc_type = lambda x: pointer(c_ulonglong(x))
 
 
 class IDaqLDevice(c_void_p):
