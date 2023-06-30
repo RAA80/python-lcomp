@@ -7,7 +7,7 @@ import functools
 import platform
 from ctypes import (cdll, pointer, byref, c_uint, c_int, c_ushort, c_ubyte,
                     cast, c_ulonglong, c_void_p, c_char_p, POINTER, CFUNCTYPE)
-from .ldevioctl import (SLOT_PAR, PLATA_DESCR_U2, DAQ_PAR, ErrorCode,
+from .ldevioctl import (SLOT_PAR, PLATA_DESCR_U2, DAQ_PAR, ERROR_CODE,
                         WDAC_PAR_0, WDAC_PAR_1, WADC_PAR_0, WADC_PAR_1)
 
 
@@ -93,7 +93,7 @@ class IDaqLDevice(c_void_p):
 
         ret = prototype((self.name, _wlib))(*arguments)
         if ret and self.name not in ("CallCreateInstance", "OpenLDevice"):
-            _logger.error("%s error %d (%s)", self.name, ret, ErrorCode[ret])
+            _logger.error("%s error %d (%s)", self.name, ret, ERROR_CODE[ret])
 
         return ret
 
@@ -125,12 +125,11 @@ class LCOMP(object):
         ''' Функция создает объект для конкретного слота '''
 
         err = c_uint()
-        slot = c_uint(slot)
 
-        result = self._ldev.CallCreateInstance(_hdll, slot, byref(err))
+        result = self._ldev.CallCreateInstance(_hdll, c_uint(slot), byref(err))
         if not result:
             raise Exception("CreateInstance error {} ({})".format(err.value,
-                                                        ErrorCode[err.value]))
+                                                       ERROR_CODE[err.value]))
         self._ifc = _ifc_type(result)
         return bool(self._ifc) or None
 
@@ -139,11 +138,10 @@ class LCOMP(object):
     def OpenLDevice(self):
         ''' Функция открывает соответствующий линк драйвера для платы '''
 
-        handle = self._ldev.OpenLDevice(self._ifc)
-        if handle == -1:
+        if self._ldev.OpenLDevice(self._ifc) == -1:
             raise Exception("OpenLDevice invalid handle")
 
-        return handle or None
+        return True
 
     def CloseLDevice(self):
         ''' Функция для завершения работы с платой '''
@@ -189,26 +187,22 @@ class LCOMP(object):
     def WritePlataDescr(self, descr, ena):
         ''' Запись пользовательского Flash '''
 
-        ena = c_ushort(ena)
-
-        return not self._ldev.WritePlataDescr(self._ifc, byref(descr), ena) or None
+        return not self._ldev.WritePlataDescr(self._ifc, byref(descr),
+                                              c_ushort(ena)) or None
 
     def ReadFlashWord(self, address):
         ''' Чтение слова из пользовательского Flash '''
 
-        address = c_ushort(address)
         data = c_ushort()
 
-        if not self._ldev.ReadFlashWord(self._ifc, address, byref(data)):
+        if not self._ldev.ReadFlashWord(self._ifc, c_ushort(address), byref(data)):
             return data.value
 
     def WriteFlashWord(self, address, value):
         ''' Запись слова в пользовательский Flash '''
 
-        address = c_ushort(address)
-        value = c_ushort(value)
-
-        return not self._ldev.WriteFlashWord(self._ifc, address, value) or None
+        return not self._ldev.WriteFlashWord(self._ifc, c_ushort(address),
+                                             c_ushort(value)) or None
 
     def RequestBufferStream(self, size, stream_id):
         ''' Выделение памяти под большой кольцевой буфер '''
@@ -228,7 +222,8 @@ class LCOMP(object):
                    WADC_PAR_1: c_uint(3),
                   }[type(daqpar)]
 
-        return not self._ldev.FillDAQparameters(self._ifc, byref(daqpar), sp_type) or None
+        return not self._ldev.FillDAQparameters(self._ifc, byref(daqpar),
+                                                sp_type) or None
 
     def SetParametersStream(self, daqpar, size):
         ''' Настройка платы АЦП/ЦАП на заданные параметры ввода или вывода данных '''
@@ -239,11 +234,12 @@ class LCOMP(object):
                    WADC_PAR_1: c_uint(3),
                   }[type(daqpar)]
 
-        size = c_uint(size)
         data = pointer(c_void_p())
         sync = pointer(c_void_p())
 
-        if not self._ldev.SetParametersStream(self._ifc, byref(daqpar), sp_type, byref(size), data, sync, self._stream_id):
+        if not self._ldev.SetParametersStream(self._ifc, byref(daqpar),
+                                              sp_type, byref(c_uint(size)),
+                                              data, sync, self._stream_id):
             data = cast(data.contents.value, POINTER(c_ushort))
             sync = cast(sync.contents.value, POINTER(c_uint))
 
@@ -267,9 +263,7 @@ class LCOMP(object):
     def EnableCorrection(self, ena):
         ''' Включает/выключает режим коррекции данных '''
 
-        ena = c_ushort(ena)
-
-        return not self._ldev.EnableCorrection(self._ifc, ena) or None
+        return not self._ldev.EnableCorrection(self._ifc, c_ushort(ena)) or None
 
     def IoAsync(self, daqpar):
         ''' Функция для асинхронных операций ввода/вывода (ввод данных с АЦП,
@@ -284,9 +278,8 @@ class LCOMP(object):
         '''
 
         param = c_uint()
-        name = c_uint(name)
 
-        if not self._ldev.GetParameter(self._ifc, name, byref(param)):
+        if not self._ldev.GetParameter(self._ifc, c_uint(name), byref(param)):
             return param.value
 
     def SetParameter(self, name, value):
@@ -294,234 +287,182 @@ class LCOMP(object):
             их с помощью GetParameter
         '''
 
-        value = c_uint(value)
-        name = c_uint(name)
-
-        return not self._ldev.SetParameter(self._ifc, name, byref(value)) or None
+        return not self._ldev.SetParameter(self._ifc, c_uint(name),
+                                           byref(c_uint(value))) or None
 
     def EnableFlashWrite(self, flag):
         ''' Разрешение записи в пользовательский Flash '''
 
-        flag = c_ushort(flag)
-
-        return not self._ldev.EnableFlashWrite(self._ifc, flag) or None
+        return not self._ldev.EnableFlashWrite(self._ifc, c_ushort(flag)) or None
 
     def SendCommand(self, cmd):
         ''' Посылает выбранную команду в DSP '''
 
-        cmd = c_ushort(cmd)
-
-        return not self._ldev.SendCommand(self._ifc, cmd) or None
+        return not self._ldev.SendCommand(self._ifc, c_ushort(cmd)) or None
 
     def SetLDeviceEvent(self, event, event_id):
         ''' Установка события в драйвере. Работа события облегчает ожидание
             готовности данных от платы при однократном заполнении буфера
         '''
 
-        event = c_void_p(event)
-        event_id = c_uint(event_id)
-
-        return not self._ldev.SetLDeviceEvent(self._ifc, event, event_id) or None
+        return not self._ldev.SetLDeviceEvent(self._ifc, c_void_p(event),
+                                              c_uint(event_id)) or None
 
     def GetWord_DM(self, address):
         ''' Читает слово из памяти данных DSP/модуля '''
 
-        address = c_ushort(address)
         data = c_ushort()
 
-        if not self._ldev.GetWord_DM(self._ifc, address, byref(data)):
+        if not self._ldev.GetWord_DM(self._ifc, c_ushort(address), byref(data)):
             return data.value
 
     def GetWord_PM(self, address):
         ''' Читает слово из памяти программ DSP/модуля '''
 
-        address = c_ushort(address)
         data = c_uint()
 
-        if not self._ldev.GetWord_PM(self._ifc, address, byref(data)):
+        if not self._ldev.GetWord_PM(self._ifc, c_ushort(address), byref(data)):
             return data.value
 
     def GetArray_DM(self, address, count):
         ''' Читает массив слов из памяти данных DSP '''
 
-        address = c_ushort(address)
-        count = c_uint(count)
         data = pointer(c_ushort())
 
-        if not self._ldev.GetArray_DM(self._ifc, address, count, data):
-            return data[:count.value]
+        if not self._ldev.GetArray_DM(self._ifc, c_ushort(address),
+                                      c_uint(count), data):
+            return data[:count]
 
     def GetArray_PM(self, address, count):
         ''' Читает массив слов из памяти программ DSP '''
 
-        address = c_ushort(address)
-        count = c_uint(count)
         data = pointer(c_uint())
 
-        if not self._ldev.GetArray_PM(self._ifc, address, count, data):
-            return data[:count.value]
+        if not self._ldev.GetArray_PM(self._ifc, c_ushort(address),
+                                      c_uint(count), data):
+            return data[:count]
 
     def PutWord_DM(self, address, data):
         ''' Записывает слово в память данных DSP/модуля '''
 
-        address = c_ushort(address)
-        data = c_ushort(data)
-
-        return not self._ldev.PutWord_DM(self._ifc, address, data) or None
+        return not self._ldev.PutWord_DM(self._ifc, c_ushort(address),
+                                         c_ushort(data)) or None
 
     def PutWord_PM(self, address, data):
         ''' Записывает слово в память программ DSP/модуля '''
 
-        address = c_ushort(address)
-        data = c_uint(data)
-
-        return not self._ldev.PutWord_PM(self._ifc, address, data) or None
+        return not self._ldev.PutWord_PM(self._ifc, c_ushort(address),
+                                         c_uint(data)) or None
 
     def PutArray_DM(self, address, count, data):
         ''' Записывает массив слов в память данных DSP '''
 
-        address = c_ushort(address)
-        data = (c_ushort * count)(*data)
-        count = c_uint(count)
-
-        return not self._ldev.PutArray_DM(self._ifc, address, count, data) or None
+        return not self._ldev.PutArray_DM(self._ifc, c_ushort(address), c_uint(count),
+                                          (c_ushort * count)(*data)) or None
 
     def PutArray_PM(self, address, count, data):
         ''' Записывает массив слов в память программ DSP '''
 
-        address = c_ushort(address)
-        data = (c_uint * count)(*data)
-        count = c_uint(count)
-
-        return not self._ldev.PutArray_PM(self._ifc, address, count, data) or None
+        return not self._ldev.PutArray_PM(self._ifc, c_ushort(address), c_uint(count),
+                                          (c_uint * count)(*data)) or None
 
 # Функции для работы с портами ввода/вывода плат
 
     def inbyte(self, offset, length=1, key=0):
         ''' Ввод байта из I/O порта '''
 
-        offset = c_uint(offset)
-        data = pointer(c_ubyte())
-        length = c_uint(length)
-        key = c_uint(key)
+        data = c_ubyte()
 
-        if not self._ldev.inbyte(self._ifc, offset, data, length, key):
-            return data[:length.value]
+        if not self._ldev.inbyte(self._ifc, c_uint(offset), byref(data),
+                                 c_uint(length), c_uint(key)):
+            return data.value
 
     def inword(self, offset, length=2, key=0):
         ''' Ввод слова из I/O порта '''
 
-        offset = c_uint(offset)
-        data = pointer(c_ushort())
-        length = c_uint(length)
-        key = c_uint(key)
+        data = c_ushort()
 
-        if not self._ldev.inword(self._ifc, offset, data, length, key):
-            return data[:length.value]
+        if not self._ldev.inword(self._ifc, c_uint(offset), byref(data),
+                                 c_uint(length), c_uint(key)):
+            return data.value
 
     def indword(self, offset, length=4, key=0):
         ''' Ввод двойного слова из I/O порта '''
 
-        offset = c_uint(offset)
-        data = pointer(c_uint())
-        length = c_uint(length)
-        key = c_uint(key)
+        data = c_uint()
 
-        if not self._ldev.indword(self._ifc, offset, data, length, key):
-            return data[:length.value]
+        if not self._ldev.indword(self._ifc, c_uint(offset), byref(data),
+                                  c_uint(length), c_uint(key)):
+            return data.value
 
     def inmbyte(self, offset, length=1, key=0):
         ''' Ввод байта из памяти '''
 
-        offset = c_uint(offset)
-        data = pointer(c_ubyte())
-        length = c_uint(length)
-        key = c_uint(key)
+        data = c_ubyte()
 
-        if not self._ldev.inmbyte(self._ifc, offset, data, length, key):
-            return data[:length.value]
+        if not self._ldev.inmbyte(self._ifc, c_uint(offset), byref(data),
+                                  c_uint(length), c_uint(key)):
+            return data.value
 
     def inmword(self, offset, length=2, key=0):
         ''' Ввод слова из памяти '''
 
-        offset = c_uint(offset)
-        data = pointer(c_ushort())
-        length = c_uint(length)
-        key = c_uint(key)
+        data = c_ushort()
 
-        if not self._ldev.inmword(self._ifc, offset, data, length, key):
-            return data[:length.value]
+        if not self._ldev.inmword(self._ifc, c_uint(offset), byref(data),
+                                  c_uint(length), c_uint(key)):
+            return data.value
 
     def inmdword(self, offset, length=4, key=0):
         ''' Ввод двойного слова из памяти '''
 
-        offset = c_uint(offset)
-        data = pointer(c_uint())
-        length = c_uint(length)
-        key = c_uint(key)
+        data = c_uint()
 
-        if not self._ldev.inmdword(self._ifc, offset, data, length, key):
-            return data[:length.value]
+        if not self._ldev.inmdword(self._ifc, c_uint(offset), byref(data),
+                                   c_uint(length), c_uint(key)):
+            return data.value
 
     def outbyte(self, offset, data, length=1, key=0):
         ''' Вывод байта в I/O порт '''
 
-        offset = c_uint(offset)
-        data = (c_ubyte * length)(*data)
-        length = c_uint(length)
-        key = c_uint(key)
-
-        return not self._ldev.outbyte(self._ifc, offset, data, length, key) or None
+        return not self._ldev.outbyte(self._ifc, c_uint(offset),
+                                      byref(c_ubyte(data)),
+                                      c_uint(length), c_uint(key)) or None
 
     def outword(self, offset, data, length=2, key=0):
         ''' Вывод слова в I/O порт '''
 
-        offset = c_uint(offset)
-        data = (c_ushort * length)(*data)
-        length = c_uint(length)
-        key = c_uint(key)
-
-        return not self._ldev.outword(self._ifc, offset, data, length, key) or None
+        return not self._ldev.outword(self._ifc, c_uint(offset),
+                                      byref(c_ushort(data)),
+                                      c_uint(length), c_uint(key)) or None
 
     def outdword(self, offset, data, length=4, key=0):
         ''' Вывод двойного слова в I/O порт '''
 
-        offset = c_uint(offset)
-        data = (c_uint * length)(*data)
-        length = c_uint(length)
-        key = c_uint(key)
-
-        return not self._ldev.outdword(self._ifc, offset, data, length, key) or None
+        return not self._ldev.outdword(self._ifc, c_uint(offset),
+                                       byref(c_uint(data)),
+                                       c_uint(length), c_uint(key)) or None
 
     def outmbyte(self, offset, data, length=1, key=0):
         ''' Вывод байта в память '''
 
-        offset = c_uint(offset)
-        data = (c_ubyte * length)(*data)
-        length = c_uint(length)
-        key = c_uint(key)
-
-        return not self._ldev.outmbyte(self._ifc, offset, data, length, key) or None
+        return not self._ldev.outmbyte(self._ifc, c_uint(offset),
+                                       byref(c_ubyte(data)),
+                                       c_uint(length), c_uint(key)) or None
 
     def outmword(self, offset, data, length=2, key=0):
         ''' Вывод слова в память '''
 
-        offset = c_uint(offset)
-        data = (c_ushort * length)(*data)
-        length = c_uint(length)
-        key = c_uint(key)
-
-        return not self._ldev.outmword(self._ifc, offset, data, length, key) or None
+        return not self._ldev.outmword(self._ifc, c_uint(offset),
+                                       byref(c_ushort(data)),
+                                       c_uint(length), c_uint(key)) or None
 
     def outmdword(self, offset, data, length=4, key=0):
         ''' Вывод двойного слова в память '''
 
-        offset = c_uint(offset)
-        data = (c_uint * length)(*data)
-        length = c_uint(length)
-        key = c_uint(key)
-
-        return not self._ldev.outmdword(self._ifc, offset, data, length, key) or None
+        return not self._ldev.outmdword(self._ifc, c_uint(offset),
+                                        byref(c_uint(data)),
+                                        c_uint(length), c_uint(key)) or None
 
 
 __all__ = [ "LCOMP" ]

@@ -5,10 +5,10 @@ from distutils.core import setup
 
 
 setup(name="python-lcomp",
-      version='0.0.28',
+      version='0.0.29',
       description='L-CARD ADC/DAC controller module',
       url='https://github.com/RAA80/python-lcomp',
-      author='Ryadno Alexey',
+      author='Alexey Ryadno',
       author_email='aryadno@mail.ru',
       license='MIT',
       packages=['lcomp', 'lcomp.device', 'lcomp.libs', 'lcomp.bios'],
