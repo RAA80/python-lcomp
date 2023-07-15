@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from ctypes import (Structure, Union, c_uint, c_char, c_ushort, c_float, c_int,
-                    c_ubyte, c_double)
+                    c_ubyte, c_double, c_byte)
 
 
 # Определения типов плат/модулей. Используется в поле BoardType структуры SLOT_PAR
@@ -219,7 +219,7 @@ class PLATA_DESCR_E140(Structure):
         ('BrdName', c_char * 11),         # название платы
         ('Rev', c_char),                  # ревизия платы
         ('DspType', c_char * 11),         # тип DSP
-        ('IsDacPresent', c_char),         # наличие ЦАП
+        ('IsDacPresent', c_byte),         # наличие ЦАП
         ('Quartz', c_uint),               # частота кварца
         ('Reserv2', c_char * 3),          # зарезервировано
         ('KoefADC', c_float * 8),         # калибровочные коэф. АЦП
@@ -259,7 +259,7 @@ class PLATA_DESCR_E2010(Structure):
         ('DspType', c_char * 16),         # тип DSP
         ('Quartz', c_uint),               # частота кварца
         ('Rev', c_char),                  # ревизия платы
-        ('IsDacPresent', c_char),         # наличие ЦАП
+        ('IsDacPresent', c_byte),         # наличие ЦАП
         ('KoefADC', c_float * 24),        # калибровочные коэф. АЦП
         ('KoefDAC', c_float * 4),         # калибровочные коэф. ЦАП
         ('Custom', c_ushort * 44),        # пользовательское место
