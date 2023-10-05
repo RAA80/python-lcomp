@@ -3,18 +3,18 @@
 
 import logging
 from lcomp.lcomp import LCOMP
-from lcomp.ldevioctl import (E140, E2010, E2010B, L_STREAM_ADC, WDAQ_PAR,
+from lcomp.ldevioctl import (E140, E2010, E2010B, E440, L_STREAM_ADC, WDAQ_PAR,
                              L_ADC_PARAM, ASYNC_PAR, L_ASYNC_DAC_OUT,
                              L_ASYNC_ADC_INP, L_ASYNC_TTL_CFG, L_ASYNC_TTL_INP,
                              L_ASYNC_TTL_OUT, L_USER_BASE)
-from lcomp.device import e140, e2010
+from lcomp.device import e140, e2010, e440
 
 logging.basicConfig(level=logging.INFO)
 
 
 if __name__ == "__main__":
     with LCOMP(slot=0) as ldev:     # либо ldev.OpenLDevice() в начале и ldev.CloseLDevice() в конце
-        print("LoadBios: {}".format(ldev.LoadBios("e2010m")))      # для E2010 биос "e2010", для E2010B биос "e2010m"
+        print("LoadBios: {}".format(ldev.LoadBios("e2010m")))      # для E2010 биос "e2010", для E2010B биос "e2010m", для E440 биос "E440"
         print("PlataTest: {}".format(ldev.PlataTest()))
 
         slPar = ldev.GetSlotParam()
@@ -52,6 +52,15 @@ if __name__ == "__main__":
             print("    Quartz:       {}".format(plDescr.t5.Quartz))
             # print("    KoefADC:      {}".format(list(plDescr.t5.KoefADC)))
             # print("    KoefDAC:      {}".format(list(plDescr.t5.KoefDAC)))
+        elif slPar.BoardType == E440:
+            print("    SerNum:       {}".format(plDescr.t4.SerNum))
+            print("    BrdName:      {}".format(plDescr.t4.BrdName))
+            print("    Rev:          {}".format(plDescr.t4.Rev))
+            print("    DspType:      {}".format(plDescr.t4.DspType))
+            print("    IsDacPresent: {}".format(bool(plDescr.t4.IsDacPresent)))
+            print("    Quartz:       {}".format(plDescr.t4.Quartz))
+            # print("    KoefADC:      {}".format(list(plDescr.t4.KoefADC)))
+            # print("    KoefDAC:      {}".format(list(plDescr.t4.KoefDAC)))
         elif slPar.BoardType in [E2010, E2010B]:
             print("    SerNum:       {}".format(plDescr.t6.SerNum))
             print("    BrdName:      {}".format(plDescr.t6.BrdName))
@@ -119,6 +128,60 @@ if __name__ == "__main__":
             print("    IrqStep: {}".format(adcPar.t3.IrqStep))
             print("    FIFO:    {}".format(adcPar.t3.FIFO))
             print("    Rate:    {}".format(adcPar.t3.dRate))
+
+        elif slPar.BoardType == E440:
+            adcPar = WDAQ_PAR()
+
+            adcPar.t3.s_Type = L_ADC_PARAM
+            adcPar.t3.FIFO = 4096
+            adcPar.t3.IrqStep = 4096
+            adcPar.t3.Pages = 32
+            adcPar.t3.AutoInit = 0
+            adcPar.t3.dRate = 400.0
+            adcPar.t3.dKadr = 0.0025
+            adcPar.t3.SynchroType = e440.NO_SYNC
+            adcPar.t3.SynchroSensitivity = e440.A_SYNC_LEVEL
+            adcPar.t3.SynchroMode = e440.A_SYNC_UP_EDGE
+            adcPar.t3.AdChannel = 0
+            adcPar.t3.AdPorog = 0
+            adcPar.t3.NCh = 1   # 2 # 3 # 4
+            adcPar.t3.Chn[0] = e440.CH_0 | e440.V10000
+            # adcPar.t3.Chn[1] = e440.CH_1 | e440.V2500
+            # adcPar.t3.Chn[2] = e440.CH_2 | e440.V0625
+            # adcPar.t3.Chn[3] = e440.CH_3 | e440.V0156
+            adcPar.t3.IrqEna = 1
+            adcPar.t3.AdcEna = 1
+
+            print("FillDAQparameters: {}".format(ldev.FillDAQparameters(adcPar.t3)))
+            print("    s_Type:             {}".format(adcPar.t3.s_Type))
+            print("    FIFO:               {}".format(adcPar.t3.FIFO))
+            print("    IrqStep:            {}".format(adcPar.t3.IrqStep))
+            print("    Pages:              {}".format(adcPar.t3.Pages))
+            print("    AutoInit:           {}".format(adcPar.t3.AutoInit))
+            print("    dRate:              {}".format(adcPar.t3.dRate))
+            print("    dKadr:              {}".format(adcPar.t3.dKadr))
+            print("    dScale:             {}".format(adcPar.t3.dScale))
+            print("    Rate:               {}".format(adcPar.t3.Rate))
+            print("    Kadr:               {}".format(adcPar.t3.Kadr))
+            print("    Scale:              {}".format(adcPar.t3.Scale))
+            print("    FPDelay:            {}".format(adcPar.t3.FPDelay))
+            print("    SynchroType:        {}".format(adcPar.t3.SynchroType))
+            print("    SynchroSensitivity: {}".format(adcPar.t3.SynchroSensitivity))
+            print("    SynchroMode:        {}".format(adcPar.t3.SynchroMode))
+            print("    AdChannel:          {}".format(adcPar.t3.AdChannel))
+            print("    AdPorog:            {}".format(adcPar.t3.AdPorog))
+            print("    NCh:                {}".format(adcPar.t3.NCh))
+            # print("    Chn:                {}".format(list(adcPar.t3.Chn)))
+            print("    IrqEna:             {}".format(adcPar.t3.IrqEna))
+            print("    AdcEna:             {}".format(adcPar.t3.AdcEna))
+
+            data_ptr, syncd = ldev.SetParametersStream(adcPar.t3, buffer_size)
+            print("SetParametersStream: {}, {}".format(data_ptr, syncd))
+            print("    Pages:   {}".format(adcPar.t3.Pages))
+            print("    IrqStep: {}".format(adcPar.t3.IrqStep))
+            print("    FIFO:    {}".format(adcPar.t3.FIFO))
+            print("    Rate:    {}".format(adcPar.t3.dRate))
+
         elif slPar.BoardType in [E2010, E2010B]:
             adcPar = WDAQ_PAR()
 
@@ -186,6 +249,8 @@ if __name__ == "__main__":
 
         if slPar.BoardType == E140:
             x = e140.GetDataADC(adcPar.t3, plDescr, data_ptr, buffer_size)
+        elif slPar.BoardType == E440:
+            x = e440.GetDataADC(adcPar.t3, plDescr, data_ptr, buffer_size)
         elif slPar.BoardType in [E2010, E2010B]:
             x = e2010.GetDataADC(adcPar.t4, plDescr, data_ptr, buffer_size)
 

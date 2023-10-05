@@ -201,7 +201,7 @@ class PLATA_DESCR_E440(Structure):
         ('BrdName', c_char * 7),          # название платы
         ('Rev', c_char),                  # ревизия платы
         ('DspType', c_char * 5),          # тип DSP
-        ('IsDacPresent', c_char),         # наличие ЦАП
+        ('IsDacPresent', c_byte),         # наличие ЦАП
         ('Quartz', c_uint),               # частота кварца
         ('Reserv2', c_char * 13),         # зарезервировано
         ('KoefADC', c_ushort * 8),        # калибровочные коэф. АЦП
