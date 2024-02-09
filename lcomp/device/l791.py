@@ -1,91 +1,73 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
+from ctypes import POINTER, c_ushort, cast
 
-# raw L791 registers
-R_ADC_BUFFER_L791           = 0x000
-R_DAC_BUFFER_L791           = 0x400
-R_CONTROL_TABLE_L791        = 0x600
-R_CONTROL_TABLE_LENGTH_L791 = 0x7F4
-R_CHANNEL_TIME_L791         = 0x7F8
-R_INT_FRAME_TIME_L791       = 0x7FC
-R_ADC_PAGE_DESC_L791        = 0x800
-R_DAC_PAGE_DESC_L791        = 0xA00
-R_ADC_PCI_COUNT_L791        = 0xF80
-R_DAC_PCI_COUNT_L791        = 0xF84
-R_DAC_TIME_L791             = 0xF88
-R_ADC_BUFFER_PTR_L791       = 0xF90
-R_DAC_BUFFER_PTR_L791       = 0xF94
-R_DIGITAL_IO_L791           = 0xF98
-R_ADC_SAMPLE_QNT_L791       = 0xF9C
-R_ADC_MASTER_QNT_L791       = 0xFA0
-R_FLASH_ADDRESS_L791        = 0xFA4
-R_FLASH_DATA_L791           = 0xF8C
-R_INTERRUPT_ENABLE_L791     = 0xFF0
-R_STATUS_L791               = 0xFF8
-R_CONTROL_L791              = 0xFFC
+from numpy import (add, array, divide, float32, frombuffer, insert, int16,
+                   multiply, split, where)
 
-# dword array access index
-I_ADC_BUFFER_L791           = 0x000 >> 2
-I_DAC_BUFFER_L791           = 0x400 >> 2
-I_CONTROL_TABLE_L791        = 0x600 >> 2
-I_CONTROL_TABLE_LENGTH_L791 = 0x7F4 >> 2
-I_CHANNEL_TIME_L791         = 0x7F8 >> 2
-I_INT_FRAME_TIME_L791       = 0x7FC >> 2
-I_ADC_PAGE_DESC_L791        = 0x800 >> 2
-I_DAC_PAGE_DESC_L791        = 0xA00 >> 2
-I_ADC_PCI_COUNT_L791        = 0xF80 >> 2
-I_DAC_PCI_COUNT_L791        = 0xF84 >> 2
-I_DAC_TIME_L791             = 0xF88 >> 2
-I_ADC_BUFFER_PTR_L791       = 0xF90 >> 2
-I_DAC_BUFFEI_PTR_L791       = 0xF94 >> 2
-I_DIGITAL_IO_L791           = 0xF98 >> 2
-I_ADC_SAMPLE_QNT_L791       = 0xF9C >> 2
-I_ADC_MASTER_QNT_L791       = 0xFA0 >> 2
-I_FLASH_ADDRESS_L791        = 0xFA4 >> 2
-I_FLASH_DATA_L791           = 0xF8C >> 2
-I_INTERRUPT_ENABLE_L791     = 0xFF0 >> 2
-I_STATUS_L791               = 0xFF8 >> 2
-I_CONTROL_L791              = 0xFFC >> 2
+_logger = logging.getLogger(__name__)
+_logger.addHandler(logging.NullHandler())
 
-# bits defines
-# CONTROL_REGISTER
-BIT_ADC_EN            = 0
-BIT_ADC_MASTER_EN     = 1
-BIT_CLR_ADC_CNT       = 2
-BIT_AUTO_STOP_ADC_MST = 3
-BIT_AUTO_STOP_ADC     = 4
-# 5-7 reserved
-BIT_SYNC_MODE_0       = 8
-BIT_SYNC_MODE_1       = 9
-BIT_SYNC_SOURCE       = 10
-# 11 reserved
-BIT_ADC_BUF_DEPTH_0   = 12
-BIT_ADC_BUF_DEPTH_1   = 13
-BIT_ADC_BUF_DEPTH_2   = 14
-# 15 reserved
-BIT_DAC_EN            = 16
-BIT_DAC_MASTER_EN     = 17
-BIT_CLR_DAC_CNT       = 18
-# 19-23 reserved
-BIT_EEPROM_CMD_0      = 24
-BIT_EEPROM_CMD_1      = 25
-BIT_EEPROM_START      = 26
-BIT_EEPROM_WR_EN      = 27
-BIT_OUTPUT_EN         = 28
-# 29-31 reserved
 
-# STATUS_REGISTER
-SBIT_ADC_MST_EVENT = 0
-SBIT_ADC_OVF_EVENT = 1
-# 2 reserved
-SBIT_ADC_BUF_EVENT = 3
-# 4-15 reserved
-SBIT_DAC_USR_EVENT = 16
-# 17 reserved
-SBIT_DAC_UNF_EVENT = 18
-# 19-23 reserved
-SBIT_PWR_OVR_EVENT = 24
-SBIT_EEPROM_BUSY   = 25
-# 26 -30 reserved
-SBIT_INT           = 31
+# диапазон входного напряжения модуля L791
+V10000 = 0              # диапазон 10В
+V5000  = 64             # диапазон 5В
+V2500  = 128            # диапазон 2.5В
+V1250  = 192            # диапазон 1.25В
+V0625  = 256            # диапазон 0.625В
+V0312  = 320            # диапазон 0.312В
+V0156  = 384            # диапазон 0.156В
+V0078  = 448            # диапазон 0.078В
+
+# номер канала L791
+CH_0  = 0
+CH_1  = 1
+CH_2  = 2
+CH_3  = 3
+CH_4  = 4
+CH_5  = 5
+CH_6  = 6
+CH_7  = 7
+CH_8  = 8
+CH_9  = 9
+CH_10 = 10
+CH_11 = 11
+CH_12 = 12
+CH_13 = 13
+CH_14 = 14
+CH_15 = 15
+
+
+def GetDataADC(daqpar, descr, address, size):
+    """ Преобразование кодов АЦП в вольты. """
+
+    GetDataADC.tail = getattr(GetDataADC, "tail", [])
+
+    arr_ptr = cast(address, POINTER(c_ushort * size))[0]
+
+    dataraw = insert(frombuffer(arr_ptr, int16), 0, GetDataADC.tail)
+    dataraw, GetDataADC.tail = split(dataraw, [dataraw.size - dataraw.size % daqpar.NCh])
+    data14b = dataraw.reshape((daqpar.NCh, -1), order="F") & 0x3FFF
+    data14b = where(data14b > 8192, data14b - 16384, data14b)
+
+    overload = (data14b > 8192) | (data14b < -8192)
+    over_chn = [ch for ch in range(overload.shape[0]) if overload[ch].any()]
+    if over_chn:
+        _logger.warning("Channels %s overload detected !!!", over_chn)
+    data14b = data14b.astype(float32)
+
+    gain = (array(daqpar.Chn) >> 6 & 0x7)[:daqpar.NCh, None]
+
+    VRange = array([10.0, 5.0, 2.5, 1.25, 0.625, 0.312, 0.156, 0.078], dtype=float32)[gain]
+    koef = array(descr.t3.KoefADC, dtype=float32)
+    A = koef[gain + 0]                          # OffsetCalibration
+    B = koef[gain + 8]                          # ScaleCalibration
+
+    add(A, data14b, out=data14b)
+    multiply(data14b, B, out=data14b)
+    multiply(data14b, VRange, out=data14b)
+    divide(data14b, 8192.0, out=data14b)
+
+    return data14b

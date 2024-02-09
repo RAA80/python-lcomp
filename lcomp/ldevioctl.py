@@ -83,17 +83,17 @@ L_BOARD_TYPE    = 10000     # собственно поле sl.BoardType
 L_POINT_SIZE    = 10001     # размер в байтах отсчета АЦП
 L_SYNC_ADDR_LO  = 10002     # адрес переменной sync (счетчик АЦП)
 L_SYNC_ADDR_HI  = 10003     # адрес переменной sync (счетчик АЦП)
-L_DATA_ADDR_LO  = 10004     # адрес массива data ( АЦП)
-L_DATA_ADDR_HI  = 10005     # адрес массива data ( АЦП)
+L_DATA_ADDR_LO  = 10004     # адрес массива data (АЦП)
+L_DATA_ADDR_HI  = 10005     # адрес массива data (АЦП)
 L_SYNC1_ADDR_LO = 10006     # адрес переменной sync (счетчик ЦАП)
 L_SYNC1_ADDR_HI = 10007     # адрес переменной sync (счетчик ЦАП)
-L_DATA1_ADDR_LO = 10008     # адрес массива data ( ЦАП)
-L_DATA1_ADDR_HI = 10009     # адрес массива data ( ЦАП)
+L_DATA1_ADDR_LO = 10008     # адрес массива data (ЦАП)
+L_DATA1_ADDR_HI = 10009     # адрес массива data (ЦАП)
 L_USER_BASE     = 10100     # ранее сохраненные любые пользовательские 128 ULONG числа
 
 # Определения EventId для событий SetLDeviceEvent
-L_EVENT_ADC_BUF  = 1
-L_EVENT_DAC_BUF  = 2
+L_EVENT_ADC_BUF  = 1        # событие по заполнении буфера АЦП
+L_EVENT_DAC_BUF  = 2        # событие при работе с буфером ЦАП (L780M)
 L_EVENT_ADC_OVF  = 3
 L_EVENT_ADC_FIFO = 4
 L_EVENT_DAC_USER = 5
@@ -276,7 +276,7 @@ class PLATA_DESCR_E154(Structure):
         ('BrdName', c_char * 11),         # название платы
         ('Rev', c_char),                  # ревизия платы
         ('DspType', c_char * 11),         # тип DSP
-        ('IsDacPresent', c_char),         # наличие ЦАП
+        ('IsDacPresent', c_ubyte),        # наличие ЦАП
         ('Quartz', c_uint),               # частота кварца
         ('Reserv2', c_char * 3),          # зарезервировано
         ('KoefADC', c_float * 8),         # калибровочные коэф. АЦП
@@ -712,6 +712,24 @@ class ASYNC_PAR(DAQ_PAR):
 
     _pack_ = 1
     _fields_ = [
+        ('dRate', c_double),                # частота опроса каналов в кадре (кГц)
+        ('Rate', c_uint),                   # частота опроса каналов в кадре (в кодах для процессора)
+        ('NCh', c_uint),                    # количество опрашиваемых каналов
+        ('Chn', c_uint * 128),              # массив с номерами каналов и усилением на них. Описывает порядок опроса каналов
+        ('Data', c_uint * 128),             # массив для данных
+        ('Mode', c_uint)                    # задает различные режимы при конфигурации
+    ]
+
+
+class WASYNC_PAR(Structure):
+    """ Cтруктура для передачи параметров асинхронного сбора/выдачи данных при вызове IoAsync """
+
+    _pack_ = 1
+    _fields_ = [
+        ('s_Type', c_uint),                 # тип структуры
+        ('FIFO', c_uint),                   # размер половины аппаратного буфера FIFO на плате
+        ('IrqStep', c_uint),                # шаг генерации прерываний
+        ('Pages', c_uint),                  # размер кольцевого буфера в шагах прерываний
         ('dRate', c_double),                # частота опроса каналов в кадре (кГц)
         ('Rate', c_uint),                   # частота опроса каналов в кадре (в кодах для процессора)
         ('NCh', c_uint),                    # количество опрашиваемых каналов

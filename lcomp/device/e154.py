@@ -1,28 +1,76 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
+from ctypes import POINTER, c_ushort, cast
 
-V_RESET_DSP_E154       = 0
-V_PUT_ARRAY_E154       = 1
-V_GET_ARRAY_E154       = 2
-V_START_ADC_E154       = 3
-V_STOP_ADC_E154        = 4
-V_START_ADC_ONCE_E154  = 5
-V_GET_MODULE_NAME_E154 = 11
+from numpy import (add, array, divide, float32, frombuffer, insert, int16,
+                   multiply, split, where)
 
-L_ADC_PARS_BASE_E154      = 0x0060
-L_ADC_ONCE_FLAG_E154      = L_ADC_PARS_BASE_E154 + 136
-L_FLASH_ENABLED_E154      = L_ADC_PARS_BASE_E154 + 137
-L_TTL_OUT_E154            = 0x0400
-L_TTL_IN_E154             = 0x0400
-L_ENABLE_TTL_OUT_E154     = 0x0402
-L_ADC_SAMPLE_E154         = 0x0410
-L_ADC_CHANNEL_SELECT_E154 = 0x0412
-L_ADC_START_E154          = 0x0413
-L_DAC_SAMPLE_E154         = 0x0420
-L_SUSPEND_MODE_E154       = 0x0430
-L_DATA_FLASH_BASE_E154    = 0x0800
-L_CODE_FLASH_BASE_E154    = 0x1000
-L_BIOS_VERSION_E154       = 0x1080
-L_DESCRIPTOR_BASE_E154    = 0x2780
-L_RAM_E154                = 0x8000
+_logger = logging.getLogger(__name__)
+_logger.addHandler(logging.NullHandler())
+
+
+# диапазон входного напряжения модуля E154
+V5000 = 0              # диапазон 5В
+V1600 = 64             # диапазон 1.6В
+V0500 = 128            # диапазон 0.5В
+V0160 = 192            # диапазон 0.16В
+
+# тип синхронизации E154
+NO_SYNC        = 0      # отсутствие синхронизации ввода
+TTL_START_SYNC = 1      # цифровая синхронизация начала ввода
+RESERVED_SYNC  = 2      # зарезервированное значение для совместимости с другими модулями
+ANALOG_SYNC    = 3      # аналоговая синхронизация начала ввода
+
+# вид синхронизации E154
+A_SYNC_LEVEL = 0        # аналоговая синхронизация по уровню
+A_SYNC_EDGE  = 1        # аналоговая синхронизация по переходу
+
+# режим синхронизации E154
+A_SYNC_UP_EDGE   = 0    # по уровню «выше» или переходу «снизу-вверх»
+A_SYNC_DOWN_EDGE = 1    # по уровню «ниже» или переходу «сверху-вниз»
+
+# номер канала E154
+CH_0 = 0
+CH_1 = 1
+CH_2 = 2
+CH_3 = 3
+CH_4 = 4
+CH_5 = 5
+CH_6 = 6
+CH_7 = 7
+
+
+def GetDataADC(daqpar, descr, address, size):
+    """ Преобразование кодов АЦП в вольты. """
+
+    GetDataADC.tail = getattr(GetDataADC, "tail", [])
+
+    arr_ptr = cast(address, POINTER(c_ushort * size))[0]
+
+    dataraw = insert(frombuffer(arr_ptr, int16), 0, GetDataADC.tail)
+    dataraw, GetDataADC.tail = split(dataraw, [dataraw.size - dataraw.size % daqpar.NCh])
+    data12b = dataraw.reshape((daqpar.NCh, -1), order="F") & 0x0FFF
+    data12b = where(data12b > 2048, data12b - 4096, data12b)
+
+    overload = (data12b > 2000) | (data12b < -2000)
+    over_chn = [ch for ch in range(overload.shape[0]) if overload[ch].any()]
+    if over_chn:
+        _logger.warning("Channels %s overload detected !!!", over_chn)
+    data12b = data12b.astype(float32)
+
+    gain = (array(daqpar.Chn) >> 6 & 0x3)[:daqpar.NCh, None]
+
+    VRange = array([5.0, 1.6, 0.5, 0.16], dtype=float32)[gain]
+
+    koef = array(descr.t7.KoefADC, dtype=float32)
+    A = koef[gain + 0]          # OffsetCalibration
+    B = koef[gain + 4]          # ScaleCalibration
+
+    add(A, data12b, out=data12b)
+    multiply(data12b, B, out=data12b)
+    multiply(data12b, VRange, out=data12b)
+    divide(data12b, 2000.0, out=data12b)
+
+    return data12b

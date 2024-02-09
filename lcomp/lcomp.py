@@ -1,15 +1,15 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import logging
 import functools
+import logging
+import os
 import platform
-from ctypes import (cdll, pointer, byref, c_uint, c_int, c_ushort, c_ubyte,
-                    cast, c_ulonglong, c_void_p, c_char_p, POINTER, CFUNCTYPE)
-from .ldevioctl import (SLOT_PAR, PLATA_DESCR_U2, DAQ_PAR, ERROR_CODE,
-                        WDAC_PAR_0, WDAC_PAR_1, WADC_PAR_0, WADC_PAR_1)
+from ctypes import (CFUNCTYPE, POINTER, byref, c_char_p, c_int, c_ubyte, c_uint,
+                    c_ulonglong, c_ushort, c_void_p, cast, cdll, pointer)
 
+from .ldevioctl import (ERROR_CODE, PLATA_DESCR_U2, SLOT_PAR, WADC_PAR_0,
+                        WADC_PAR_1, WASYNC_PAR, WDAC_PAR_0, WDAC_PAR_1)
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -60,7 +60,7 @@ class IDaqLDevice(c_void_p):
         'inmdword': CFUNCTYPE(c_uint, c_void_p, c_uint, POINTER(c_uint), c_uint, c_uint),
         'inmword': CFUNCTYPE(c_uint, c_void_p, c_uint, POINTER(c_ushort), c_uint, c_uint),
         'inword': CFUNCTYPE(c_uint, c_void_p, c_uint, POINTER(c_ushort), c_uint, c_uint),
-        'IoAsync': CFUNCTYPE(c_uint, c_void_p, POINTER(DAQ_PAR)),
+        'IoAsync': CFUNCTYPE(c_uint, c_void_p, POINTER(WASYNC_PAR)),
         'LoadBios': CFUNCTYPE(c_uint, c_void_p, c_char_p),
         'OpenLDevice': CFUNCTYPE(c_int, c_void_p),
         'outbyte': CFUNCTYPE(c_uint, c_void_p, c_uint, POINTER(c_ubyte), c_uint, c_uint),

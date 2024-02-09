@@ -3,9 +3,8 @@
 
 from distutils.core import setup
 
-
 setup(name="python-lcomp",
-      version='0.0.31',
+      version='0.0.32',
       description='L-CARD ADC/DAC controller module',
       url='https://github.com/RAA80/python-lcomp',
       author='Alexey Ryadno',
@@ -15,7 +14,7 @@ setup(name="python-lcomp",
       package_data={"lcomp": ["bios/*.pld", "bios/*.bio",
                               "libs/*.dll", "libs/*.so"]},
       install_requires=['numpy >= 1.12'],
-      platforms=['Linux', 'Mac OS X', 'Windows'],
+      platforms=['Linux', 'Windows'],
       classifiers=['Development Status :: 3 - Alpha',
                    'Intended Audience :: Science/Research',
                    'Intended Audience :: Developers',
@@ -31,5 +30,6 @@ setup(name="python-lcomp",
                    'Programming Language :: Python :: 3.6',
                    'Programming Language :: Python :: 3.7',
                    'Programming Language :: Python :: 3.8',
-                  ]
+                   'Programming Language :: Python :: 3.9',
+                  ],
      )
