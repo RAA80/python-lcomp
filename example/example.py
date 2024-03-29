@@ -111,7 +111,9 @@ if __name__ == "__main__":
             adcPar.t3.AdChannel = 0
             adcPar.t3.AdPorog = 0
             adcPar.t3.NCh = 1                                   # 1 - 16                    1 - 8
-            adcPar.t3.Chn[0] = e140.CH_0 | e140.V10000          # e440.CH_0 | e440.V10000   e154.CH_0 | e154.V5000
+            adcPar.t3.Chn[0] = e140.CH_0 | e140.V10000 | e140.CH_DIFF     # для дифференциального режима
+            # adcPar.t3.Chn[0] = e140.CH_0 | e140.V10000 | e140.CH_GRND   # для режима с общей землей
+
             # adcPar.t3.Chn[1] = e140.CH_1 | e140.V2500         # e440.CH_1 | e440.V2500    e154.CH_1 | e154.V1600
             # adcPar.t3.Chn[2] = e140.CH_2 | e140.V0625         # e440.CH_2 | e440.V0625    e154.CH_2 | e154.V0500
             # adcPar.t3.Chn[3] = e140.CH_3 | e140.V0156         # e440.CH_3 | e440.V0156    e154.CH_3 | e154.V0160

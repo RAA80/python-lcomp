@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from ctypes import cast, POINTER, c_ushort
-from numpy import (array, frombuffer, int16, insert, multiply, divide, float32,
-                   split, add, where)
+from ctypes import POINTER, c_ushort, cast
+
+from numpy import (add, array, divide, float32, frombuffer, insert, int16,
+                   multiply, split, where)
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -52,10 +53,26 @@ CH_12 = 12
 CH_13 = 13
 CH_14 = 14
 CH_15 = 15
+CH_16 = 16
+CH_17 = 17
+CH_18 = 18
+CH_19 = 19
+CH_20 = 20
+CH_21 = 21
+CH_22 = 22
+CH_23 = 23
+CH_24 = 24
+CH_25 = 25
+CH_26 = 26
+CH_27 = 27
+CH_28 = 28
+CH_29 = 29
+CH_30 = 30
+CH_31 = 31
 
 
 def GetDataADC(daqpar, descr, address, size):
-    ''' Чтение данных из буфера. Преобразование кодов АЦП в вольты '''
+    """Преобразование кодов АЦП в вольты."""
 
     GetDataADC.tail = getattr(GetDataADC, "tail", [])
 
@@ -63,7 +80,7 @@ def GetDataADC(daqpar, descr, address, size):
 
     dataraw = insert(frombuffer(arr_ptr, int16), 0, GetDataADC.tail)
     dataraw, GetDataADC.tail = split(dataraw, [dataraw.size - dataraw.size % daqpar.NCh])
-    data14b = dataraw.reshape((daqpar.NCh, -1), order='F') & 0x3FFF
+    data14b = dataraw.reshape((daqpar.NCh, -1), order="F") & 0x3FFF
     data14b = where(data14b > 8192, data14b - 16384, data14b)
 
     overload = (data14b > 8000) | (data14b < -8000)
@@ -80,9 +97,9 @@ def GetDataADC(daqpar, descr, address, size):
     A = koef[gain + 0]                          # OffsetCalibration
     B = koef[gain + 4]                          # ScaleCalibration
 
-    add(A, data14b, out=data14b)                #
-    multiply(data14b, B, out=data14b)           # Оптимизированная версия ...
-    multiply(data14b, VRange, out=data14b)      # ... (A + data14b) * B * VRange / 8000.0
-    divide(data14b, 8000.0, out=data14b)        #
+    add(A, data14b, out=data14b)
+    multiply(data14b, B, out=data14b)
+    multiply(data14b, VRange, out=data14b)
+    divide(data14b, 8000.0, out=data14b)
 
     return data14b
