@@ -5,7 +5,7 @@ from distutils.core import setup
 
 setup(name="python-lcomp",
       version='0.0.33',
-      description='L-CARD ADC/DAC controller module',
+      description='L-CARD ADC/DAC controllers library',
       url='https://github.com/RAA80/python-lcomp',
       author='Alexey Ryadno',
       author_email='aryadno@mail.ru',
