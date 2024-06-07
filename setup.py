@@ -4,7 +4,7 @@
 from distutils.core import setup
 
 setup(name="python-lcomp",
-      version='0.0.33',
+      version='0.0.34',
       description='L-CARD ADC/DAC controllers library',
       url='https://github.com/RAA80/python-lcomp',
       author='Alexey Ryadno',
@@ -31,5 +31,7 @@ setup(name="python-lcomp",
                    'Programming Language :: Python :: 3.7',
                    'Programming Language :: Python :: 3.8',
                    'Programming Language :: Python :: 3.9',
+                   "Programming Language :: Python :: 3.10",
+                   "Programming Language :: Python :: 3.11",
                   ],
      )

@@ -278,12 +278,9 @@ if __name__ == "__main__":
         elif slPar.BoardType == L791:
             x = l791.GetDataADC(adcPar.t4, plDescr, data_ptr, buffer_size)
 
-        with open("channel-1.log", "w") as fh:
-            fh.write(str(x[0].tolist()))        # индекс соответствует номеру канала из Chn
-        # with open("channel-2.log", "w") as fh:
-        #     fh.write(str(x[1].tolist()))
-        # with open("channel-3.log", "w") as fh:
-        #     fh.write(str(x[2].tolist()))
+        x[0].tofile("channel-1.log", sep="\n")  # индекс соответствует номеру канала из Chn
+        # x[1].tofile("channel-2.log", sep="\n")
+        # x[2].tofile("channel-3.log", sep="\n")
 
         print("StopLDevice: {}".format(ldev.StopLDevice()))
 
@@ -337,3 +334,9 @@ if __name__ == "__main__":
         print("inmbyte: {}".format(ldev.inmbyte(offset=0)))
         print("inmword: {}".format(ldev.inmword(offset=0)))
         print("inmdword: {}".format(ldev.inmdword(offset=0)))
+
+        print("Get_LDEV2_Interface: {}".format(ldev.Get_LDEV2_Interface()))
+        print("InitStartLDeviceEx: {}".format(ldev.InitStartLDeviceEx(stream_id=L_STREAM_ADC)))
+        print("StartLDeviceEx: {}".format(ldev.StartLDeviceEx(stream_id=L_STREAM_ADC)))
+        print("StopLDeviceEx: {}".format(ldev.StopLDeviceEx(stream_id=L_STREAM_ADC)))
+        print("Release_LDEV2_Interface: {}".format(ldev.Release_LDEV2_Interface()))

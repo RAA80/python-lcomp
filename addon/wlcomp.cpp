@@ -449,3 +449,31 @@ DllExport(ULONG) outmdword(LPVOID hIfc, ULONG offset, PULONG data, ULONG len, UL
 {
     return ((IDaqLDevice*)hIfc)->outmdword(offset, data, len, key);
 }
+
+// Расширенный интерфейс для работы с устройствами
+
+DllExport(LPVOID) Get_LDEV2_Interface(LPVOID hIfc, PULONG Err)
+{
+    *Err = L_NOTSUPPORTED;
+    return NULL;
+}
+
+DllExport(ULONG) Release_LDEV2_Interface(LPVOID hIfc)
+{
+    return L_NOTSUPPORTED;
+}
+
+DllExport(ULONG) InitStartLDeviceEx(LPVOID hIfc, ULONG StreamId)
+{
+    return L_NOTSUPPORTED;
+}
+
+DllExport(ULONG) StartLDeviceEx(LPVOID hIfc, ULONG StreamId)
+{
+    return L_NOTSUPPORTED;
+}
+
+DllExport(ULONG) StopLDeviceEx(LPVOID hIfc, ULONG StreamId)
+{
+    return L_NOTSUPPORTED;
+}
