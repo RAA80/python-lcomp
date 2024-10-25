@@ -1,5 +1,6 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
+#! /usr/bin/env python3
+
+"""Константы и функции для работы с модулем E14-140."""
 
 import logging
 from ctypes import POINTER, c_ushort, cast
@@ -13,9 +14,9 @@ _logger.addHandler(logging.NullHandler())
 
 # диапазон входного напряжения модуля E140
 V10000 = 0              # диапазон 10В
-V2500  = 64             # диапазон 2.5В
-V0625  = 128            # диапазон 0.625В
-V0156  = 192            # диапазон 0.15625В
+V2500 = 64              # диапазон 2.5В
+V0625 = 128             # диапазон 0.625В
+V0156 = 192             # диапазон 0.15625В
 
 # тип канала E140
 CH_DIFF = 0             # дифференциальный канал
@@ -23,30 +24,30 @@ CH_NULL = 16            # калибровка нуля
 CH_GRND = 32            # канал с общей землей
 
 # тип синхронизации E140
-NO_SYNC        = 0      # нет синхронизации
+NO_SYNC = 0             # нет синхронизации
 TTL_START_SYNC = 1      # цифровая синхронизация старта, остальные параметры синхронизации не используются
-TTL_KADR_SYNC  = 2      # по-кадровая синхронизация, остальные параметры синхронизации не используются
-ANALOG_SYNC    = 3      # аналоговая синхронизация старта по выбранному каналу АЦП
+TTL_KADR_SYNC = 2       # по-кадровая синхронизация, остальные параметры синхронизации не используются
+ANALOG_SYNC = 3         # аналоговая синхронизация старта по выбранному каналу АЦП
 
 # вид синхронизации E140
 A_SYNC_LEVEL = 0        # аналоговая синхронизация по уровню
-A_SYNC_EDGE  = 1        # аналоговая синхронизация по переходу
+A_SYNC_EDGE = 1         # аналоговая синхронизация по переходу
 
 # режим синхронизации E140
-A_SYNC_UP_EDGE   = 0    # по уровню «выше» или переходу «снизу-вверх»
+A_SYNC_UP_EDGE = 0      # по уровню «выше» или переходу «снизу-вверх»
 A_SYNC_DOWN_EDGE = 1    # по уровню «ниже» или переходу «сверху-вниз»
 
 # номер канала E140
-CH_0  = 0
-CH_1  = 1
-CH_2  = 2
-CH_3  = 3
-CH_4  = 4
-CH_5  = 5
-CH_6  = 6
-CH_7  = 7
-CH_8  = 8
-CH_9  = 9
+CH_0 = 0
+CH_1 = 1
+CH_2 = 2
+CH_3 = 3
+CH_4 = 4
+CH_5 = 5
+CH_6 = 6
+CH_7 = 7
+CH_8 = 8
+CH_9 = 9
 CH_10 = 10
 CH_11 = 11
 CH_12 = 12
@@ -84,9 +85,8 @@ def GetDataADC(daqpar, descr, address, size):
     data14b = where(data14b > 8192, data14b - 16384, data14b)
 
     overload = (data14b > 8000) | (data14b < -8000)
-    over_chn = [ch for ch in range(overload.shape[0]) if overload[ch].any()]
-    if over_chn:
-        _logger.warning("Channels %s overload detected !!!", over_chn)
+    if over_chn := [ch for ch in range(overload.shape[0]) if overload[ch].any()]:
+        _logger.warning("Channels %s overload detected", over_chn)
     data14b = data14b.astype(float32)
 
     gain = (array(daqpar.Chn) >> 6 & 0x3)[:daqpar.NCh, None]

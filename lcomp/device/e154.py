@@ -1,5 +1,6 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
+#! /usr/bin/env python3
+
+"""Константы и функции для работы с модулем E154."""
 
 import logging
 from ctypes import POINTER, c_ushort, cast
@@ -18,17 +19,17 @@ V0500 = 128            # диапазон 0.5В
 V0160 = 192            # диапазон 0.16В
 
 # тип синхронизации E154
-NO_SYNC        = 0      # отсутствие синхронизации ввода
+NO_SYNC = 0             # отсутствие синхронизации ввода
 TTL_START_SYNC = 1      # цифровая синхронизация начала ввода
-RESERVED_SYNC  = 2      # зарезервированное значение для совместимости с другими модулями
-ANALOG_SYNC    = 3      # аналоговая синхронизация начала ввода
+RESERVED_SYNC = 2       # зарезервированное значение для совместимости с другими модулями
+ANALOG_SYNC = 3         # аналоговая синхронизация начала ввода
 
 # вид синхронизации E154
 A_SYNC_LEVEL = 0        # аналоговая синхронизация по уровню
-A_SYNC_EDGE  = 1        # аналоговая синхронизация по переходу
+A_SYNC_EDGE = 1         # аналоговая синхронизация по переходу
 
 # режим синхронизации E154
-A_SYNC_UP_EDGE   = 0    # по уровню «выше» или переходу «снизу-вверх»
+A_SYNC_UP_EDGE = 0      # по уровню «выше» или переходу «снизу-вверх»
 A_SYNC_DOWN_EDGE = 1    # по уровню «ниже» или переходу «сверху-вниз»
 
 # номер канала E154
@@ -43,7 +44,7 @@ CH_7 = 7
 
 
 def GetDataADC(daqpar, descr, address, size):
-    """ Преобразование кодов АЦП в вольты. """
+    """Преобразование кодов АЦП в вольты."""
 
     GetDataADC.tail = getattr(GetDataADC, "tail", [])
 
@@ -55,9 +56,8 @@ def GetDataADC(daqpar, descr, address, size):
     data12b = where(data12b > 2048, data12b - 4096, data12b)
 
     overload = (data12b > 2000) | (data12b < -2000)
-    over_chn = [ch for ch in range(overload.shape[0]) if overload[ch].any()]
-    if over_chn:
-        _logger.warning("Channels %s overload detected !!!", over_chn)
+    if over_chn := [ch for ch in range(overload.shape[0]) if overload[ch].any()]:
+        _logger.warning("Channels %s overload detected", over_chn)
     data12b = data12b.astype(float32)
 
     gain = (array(daqpar.Chn) >> 6 & 0x3)[:daqpar.NCh, None]

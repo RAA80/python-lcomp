@@ -1,10 +1,12 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
+#! /usr/bin/env python3
+
+"""Константы и функции для работы с модулем E20-10."""
 
 import logging
-from ctypes import cast, POINTER, c_ushort
-from numpy import (array, frombuffer, int16, insert, multiply, divide, float32,
-                   split, add, where)
+from ctypes import POINTER, c_ushort, cast
+
+from numpy import (add, array, divide, float32, frombuffer, insert, int16,
+                   multiply, split, where)
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -36,24 +38,24 @@ GND_3 = 0x0000      # вход заземлен для 3 канала
 SIG_3 = 0x0800      # вход подключен к сигналу для 3 канала
 
 # тип синхронизации E2010
-INT_START_TRANS     = 0x01      # внутренний старт с разрешением трансляции сигнала на разъем
-INT_START           = 0x81      # просто внутренний старт
-EXT_START_UP        = 0x84      # внешний импульс старта по переднему фронту
-EXT_START_DOWN      = 0x94      # внешний импульс старта по заднему фронту
+INT_START_TRANS = 0x01          # внутренний старт с разрешением трансляции сигнала на разъем
+INT_START = 0x81                # просто внутренний старт
+EXT_START_UP = 0x84             # внешний импульс старта по переднему фронту
+EXT_START_DOWN = 0x94           # внешний импульс старта по заднему фронту
 EXT_START_DOWN_REVB = 0x8C      # внешний импульс старта по заднему фронту для ревизии B
 
 # источник тактовых импульсов для АЦП E2010
 INT_CLK_TRANS = 0x00            # внутренний источник с трансляцией
-INT_CLK       = 0x40            # просто внутренний источник
-EXT_CLK_UP    = 0x42            # внешний источник, по переднему фронту
-EXT_CLK_DOWN  = 0x62            # внешний источник, по заднему фронту
+INT_CLK = 0x40                  # просто внутренний источник
+EXT_CLK_UP = 0x42               # внешний источник, по переднему фронту
+EXT_CLK_DOWN = 0x62             # внешний источник, по заднему фронту
 
 # режим аналоговой синхронизации и номер канала E2010
-A_SYNC_OFF       = 0x0000       # нет аналоговой синхронизации
-A_SYNC_UP_EDGE   = 0x0080       # синхронизация по переднему фронту
+A_SYNC_OFF = 0x0000             # нет аналоговой синхронизации
+A_SYNC_UP_EDGE = 0x0080         # синхронизация по переднему фронту
 A_SYNC_DOWN_EDGE = 0x0084       # синхронизация по заднему фронту
-A_SYNC_HL_LEVEL  = 0x0088       # синхронизация по положительному уровню
-A_SYNC_LH_LEVEL  = 0x008C       # синхронизация по отрицательно уровню
+A_SYNC_HL_LEVEL = 0x0088        # синхронизация по положительному уровню
+A_SYNC_LH_LEVEL = 0x008C        # синхронизация по отрицательно уровню
 
 # номер канала E2010
 CH_0 = 0x00
@@ -70,12 +72,12 @@ def _gain_index(mask, channel):
             CH_2: {bool(mask & SIG_2 and mask & V03_2): 2,
                    bool(mask & SIG_2 and mask & V10_2): 1},
             CH_3: {bool(mask & SIG_3 and mask & V03_3): 2,
-                   bool(mask & SIG_3 and mask & V10_3): 1}
+                   bool(mask & SIG_3 and mask & V10_3): 1},
            }[channel].get(True, 0)
 
 
 def GetDataADC(daqpar, descr, address, size):
-    ''' Чтение данных из буфера. Преобразование кодов АЦП в вольты '''
+    """Преобразование кодов АЦП в вольты."""
 
     GetDataADC.tail = getattr(GetDataADC, "tail", [])
 
@@ -83,13 +85,12 @@ def GetDataADC(daqpar, descr, address, size):
 
     dataraw = insert(frombuffer(arr_ptr, int16), 0, GetDataADC.tail)
     dataraw, GetDataADC.tail = split(dataraw, [dataraw.size - dataraw.size % daqpar.NCh])
-    data14b = dataraw.reshape((daqpar.NCh, -1), order='F') & 0x3FFF
+    data14b = dataraw.reshape((daqpar.NCh, -1), order="F") & 0x3FFF
     data14b = where(data14b > 8192, data14b - 16384, data14b)
 
     overload = (data14b > 8000) | (data14b < -8000)
-    over_chn = [ch for ch in range(overload.shape[0]) if overload[ch].any()]
-    if over_chn:
-        _logger.warning("Channels %s overload detected !!!", over_chn)
+    if over_chn := [ch for ch in range(overload.shape[0]) if overload[ch].any()]:
+        _logger.warning("Channels %s overload detected", over_chn)
     data14b = data14b.astype(float32)
 
     gain = array([_gain_index(daqpar.AdcIMask, daqpar.Chn[ch])

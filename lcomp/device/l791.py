@@ -1,5 +1,6 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
+#! /usr/bin/env python3
+
+"""Константы и функции для работы с модулем L791."""
 
 import logging
 from ctypes import POINTER, c_ushort, cast
@@ -13,25 +14,25 @@ _logger.addHandler(logging.NullHandler())
 
 # диапазон входного напряжения модуля L791
 V10000 = 0              # диапазон 10В
-V5000  = 64             # диапазон 5В
-V2500  = 128            # диапазон 2.5В
-V1250  = 192            # диапазон 1.25В
-V0625  = 256            # диапазон 0.625В
-V0312  = 320            # диапазон 0.312В
-V0156  = 384            # диапазон 0.156В
-V0078  = 448            # диапазон 0.078В
+V5000 = 64              # диапазон 5В
+V2500 = 128             # диапазон 2.5В
+V1250 = 192             # диапазон 1.25В
+V0625 = 256             # диапазон 0.625В
+V0312 = 320             # диапазон 0.312В
+V0156 = 384             # диапазон 0.156В
+V0078 = 448             # диапазон 0.078В
 
 # номер канала L791
-CH_0  = 0
-CH_1  = 1
-CH_2  = 2
-CH_3  = 3
-CH_4  = 4
-CH_5  = 5
-CH_6  = 6
-CH_7  = 7
-CH_8  = 8
-CH_9  = 9
+CH_0 = 0
+CH_1 = 1
+CH_2 = 2
+CH_3 = 3
+CH_4 = 4
+CH_5 = 5
+CH_6 = 6
+CH_7 = 7
+CH_8 = 8
+CH_9 = 9
 CH_10 = 10
 CH_11 = 11
 CH_12 = 12
@@ -41,7 +42,7 @@ CH_15 = 15
 
 
 def GetDataADC(daqpar, descr, address, size):
-    """ Преобразование кодов АЦП в вольты. """
+    """Преобразование кодов АЦП в вольты."""
 
     GetDataADC.tail = getattr(GetDataADC, "tail", [])
 
@@ -53,9 +54,8 @@ def GetDataADC(daqpar, descr, address, size):
     data14b = where(data14b > 8192, data14b - 16384, data14b)
 
     overload = (data14b > 8192) | (data14b < -8192)
-    over_chn = [ch for ch in range(overload.shape[0]) if overload[ch].any()]
-    if over_chn:
-        _logger.warning("Channels %s overload detected !!!", over_chn)
+    if over_chn := [ch for ch in range(overload.shape[0]) if overload[ch].any()]:
+        _logger.warning("Channels %s overload detected", over_chn)
     data14b = data14b.astype(float32)
 
     gain = (array(daqpar.Chn) >> 6 & 0x7)[:daqpar.NCh, None]
