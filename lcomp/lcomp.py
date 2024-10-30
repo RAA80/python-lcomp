@@ -100,16 +100,15 @@ class IDaqLDevice(c_void_p):
         "StopLDeviceEx": CFUNCTYPE(c_uint, c_void_p, c_uint),
     }
 
-    def __call__(self, *args: tuple) -> int | None:
-        prototype, *arguments = args
+    def __call__(self, prototype, *arguments: tuple) -> int | None:
+        result = prototype((self.name, _wlib))(*arguments)
 
-        ret = prototype((self.name, _wlib))(*arguments)
         special_names = {"CallCreateInstance", "OpenLDevice", "Get_LDEV2_Interface"}
-        if ret and self.name not in special_names:
-            msg = f"{self.name} error {ret} ({L_ERROR(ret).name})"
+        if result and self.name not in special_names:
+            msg = f"{self.name} error {result} ({L_ERROR(result).name})"
             _logger.error(msg)
 
-        return ret if self.name in special_names else not ret or None
+        return result if self.name in special_names else not result or None
 
     def __getattr__(self, name: str) -> partial:
         self.name = name
