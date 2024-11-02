@@ -7,8 +7,8 @@ from __future__ import annotations
 import logging
 import os
 import platform
-from ctypes import (CFUNCTYPE, POINTER, byref, c_char_p, c_int, c_ubyte, c_uint,
-                    c_ulonglong, c_ushort, c_void_p, cast, cdll, pointer)
+from ctypes import (CDLL, CFUNCTYPE, POINTER, byref, c_char_p, c_int, c_ubyte,
+                    c_uint, c_ulonglong, c_ushort, c_void_p, cast, cdll, pointer)
 from functools import partial
 
 from .ioctl import (L_ERROR, L_EVENT, L_STREAM, PLATA_DESCR_U2, SLOT_PAR, WADC_PAR_0,
@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
 
 
-def _load_lib(name):
+def _load_lib(name: str) -> CDLL:
     return cdll.LoadLibrary(os.path.join(os.path.dirname(__file__), "libs", name))
 
 
@@ -124,6 +124,10 @@ class LCOMP:
         self._ifc = None
         self._ifc2 = None
         self._stream_id = None
+        self._sp_type = {WDAC_PAR_0: c_uint(0),
+                         WDAC_PAR_1: c_uint(1),
+                         WADC_PAR_0: c_uint(2),
+                         WADC_PAR_1: c_uint(3)}
 
         self._ldev = IDaqLDevice()
         self.CreateInstance(slot)
@@ -233,27 +237,17 @@ class LCOMP:
     def FillDAQparameters(self, daqpar: WDAQ_PAR) -> bool:
         """Заполняет значениями внутреннюю структуру параметров сбора данных."""
 
-        sp_type = {WDAC_PAR_0: c_uint(0),
-                   WDAC_PAR_1: c_uint(1),
-                   WADC_PAR_0: c_uint(2),
-                   WADC_PAR_1: c_uint(3),
-                  }[type(daqpar)]
-
-        return self._ldev.FillDAQparameters(self._ifc, byref(daqpar), sp_type)
+        return self._ldev.FillDAQparameters(self._ifc, byref(daqpar),
+                                            self._sp_type[type(daqpar)])
 
     def SetParametersStream(self, daqpar: WDAQ_PAR, size: int) -> tuple:
         """Настройка платы АЦП/ЦАП на заданные параметры ввода или вывода данных."""
 
-        sp_type = {WDAC_PAR_0: c_uint(0),
-                   WDAC_PAR_1: c_uint(1),
-                   WADC_PAR_0: c_uint(2),
-                   WADC_PAR_1: c_uint(3),
-                  }[type(daqpar)]
-
         data = pointer(c_void_p())
         sync = pointer(c_void_p())
 
-        if self._ldev.SetParametersStream(self._ifc, byref(daqpar), sp_type,
+        if self._ldev.SetParametersStream(self._ifc, byref(daqpar),
+                                          self._sp_type[type(daqpar)],
                                           byref(c_uint(size)), data, sync,
                                           self._stream_id):
             data = cast(data.contents.value, POINTER(c_ushort))

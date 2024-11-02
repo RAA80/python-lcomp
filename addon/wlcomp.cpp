@@ -4,6 +4,7 @@
     #define DllExport(type) type
 #endif
 
+#include <string.h>
 #include <dlfcn.h>
 
 #define INITGUID
@@ -13,8 +14,21 @@
 #include "../include/ifc_ldev.h"
 
 
+#define L_ULONG unsigned long long
+
+
 typedef IDaqLDevice* (*CREATEFUNCPTR)(ULONG slot);
 
+
+DllExport(HINSTANCE) LoadAPIDLL(char *dllpath)
+{
+    return (HINSTANCE)dlopen(dllpath, RTLD_LAZY);
+}
+
+DllExport(ULONG) FreeAPIDLL(HINSTANCE handle)
+{
+    return dlclose(handle);
+}
 
 DllExport(LPVOID) CallCreateInstance(HINSTANCE hDll, ULONG slot, PULONG Err)
 {
@@ -448,6 +462,34 @@ DllExport(ULONG) outmword(LPVOID hIfc, ULONG offset, PUSHORT data, ULONG len, UL
 DllExport(ULONG) outmdword(LPVOID hIfc, ULONG offset, PULONG data, ULONG len, ULONG key)
 {
     return ((IDaqLDevice*)hIfc)->outmdword(offset, data, len, key);
+}
+
+// Для LabView
+
+DllExport(ULONG) GetSyncData(LPVOID hIfc, L_ULONG SyncPtr, ULONG Offset, ULONG *Sync)
+{
+    *Sync = *((PULONG)SyncPtr);
+    return 0;
+}
+
+DllExport(ULONG) GetDataFromBuffer(LPVOID hIfc, L_ULONG DataPtr, LPVOID DataArray, ULONG size, ULONG mask)
+{
+    UCHAR *D;
+    D = (PUCHAR)DataArray;
+    for(ULONG j=0; j<size; j++) D[j] = ((PUCHAR)DataPtr)[j];
+
+    ULONG *DA;
+    DA = (PULONG)DataArray;
+    if(mask)
+        for(ULONG i=0; i<size/sizeof(ULONG); i++) DA[i] = DA[i] & mask;
+
+    return 0;
+}
+
+DllExport(ULONG) PutDataToBuffer(LPVOID hIfc, L_ULONG DataPtr, LPVOID DataArray, ULONG size)
+{
+    memcpy((LPVOID)DataPtr, DataArray, size*sizeof(UCHAR));
+    return 0;
 }
 
 // Расширенный интерфейс для работы с устройствами
