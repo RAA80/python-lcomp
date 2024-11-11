@@ -5,8 +5,7 @@
 import logging
 from ctypes import POINTER, c_ushort, cast
 
-from numpy import (add, array, divide, float32, frombuffer, insert, int16,
-                   multiply, split, where)
+from numpy import abs, any, array, float32, frombuffer, insert, int16, split, where
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -53,10 +52,9 @@ def GetDataADC(daqpar, descr, address, size):
     dataraw = insert(frombuffer(arr_ptr, int16), 0, GetDataADC.tail)
     dataraw, GetDataADC.tail = split(dataraw, [dataraw.size - dataraw.size % daqpar.NCh])
     data12b = dataraw.reshape((daqpar.NCh, -1), order="F") & 0x0FFF
-    data12b = where(data12b > 2048, data12b - 4096, data12b)
+    data12b[data12b > 2048] -= 4096
 
-    overload = (data12b > 2000) | (data12b < -2000)
-    if over_chn := [ch for ch in range(overload.shape[0]) if overload[ch].any()]:
+    if over_chn := where(any(abs(data12b) > 2000, axis=1))[0].tolist():
         _logger.warning("Channels %s overload detected", over_chn)
     data12b = data12b.astype(float32)
 
@@ -65,12 +63,12 @@ def GetDataADC(daqpar, descr, address, size):
     VRange = array([5.0, 1.6, 0.5, 0.16], dtype=float32)[gain]
 
     koef = array(descr.t7.KoefADC, dtype=float32)
-    A = koef[gain + 0]          # OffsetCalibration
+    A = koef[gain]              # OffsetCalibration
     B = koef[gain + 4]          # ScaleCalibration
 
-    add(A, data12b, out=data12b)
-    multiply(data12b, B, out=data12b)
-    multiply(data12b, VRange, out=data12b)
-    divide(data12b, 2000.0, out=data12b)
+    data12b += A
+    data12b *= B
+    data12b *= VRange
+    data12b /= 2000.0
 
     return data12b

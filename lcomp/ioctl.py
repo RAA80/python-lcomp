@@ -2,8 +2,8 @@
 
 """Определения структур для взаимодействия с приборами LCARD."""
 
-from ctypes import (Structure, Union, c_byte, c_char, c_double, c_float, c_ubyte,
-                    c_uint, c_ushort)
+from ctypes import (Structure, Union, c_char, c_double, c_float, c_ubyte, c_uint,
+                    c_ushort)
 from enum import IntEnum
 
 
@@ -208,7 +208,7 @@ class PLATA_DESCR_E440(Structure):
         ("BrdName", c_char * 7),          # название платы
         ("Rev", c_char),                  # ревизия платы
         ("DspType", c_char * 5),          # тип DSP
-        ("IsDacPresent", c_byte),         # наличие ЦАП
+        ("IsDacPresent", c_ubyte),        # наличие ЦАП
         ("Quartz", c_uint),               # частота кварца
         ("Reserv2", c_char * 13),         # зарезервировано
         ("KoefADC", c_ushort * 8),        # калибровочные коэф. АЦП
@@ -226,7 +226,7 @@ class PLATA_DESCR_E140(Structure):
         ("BrdName", c_char * 11),         # название платы
         ("Rev", c_char),                  # ревизия платы
         ("DspType", c_char * 11),         # тип DSP
-        ("IsDacPresent", c_byte),         # наличие ЦАП
+        ("IsDacPresent", c_ubyte),        # наличие ЦАП
         ("Quartz", c_uint),               # частота кварца
         ("Reserv2", c_char * 3),          # зарезервировано
         ("KoefADC", c_float * 8),         # калибровочные коэф. АЦП
@@ -268,7 +268,7 @@ class PLATA_DESCR_E2010(Structure):
         ("DspType", c_char * 16),         # тип DSP
         ("Quartz", c_uint),               # частота кварца
         ("Rev", c_char),                  # ревизия платы
-        ("IsDacPresent", c_byte),         # наличие ЦАП
+        ("IsDacPresent", c_ubyte),        # наличие ЦАП
         ("KoefADC", c_float * 24),        # калибровочные коэф. АЦП
         ("KoefDAC", c_float * 4),         # калибровочные коэф. ЦАП
         ("Custom", c_ushort * 44),        # пользовательское место
@@ -452,31 +452,31 @@ class PLATA_DESCR_U2(Union):
 class WDAC_PAR_0(Structure):
     _pack_ = 1
     _fields_ = [
-        ("s_Type", c_uint),
+        ("s_Type", c_uint),         # тип структуры (должен быть L_DAC_PARAM)
         ("FIFO", c_uint),
         ("IrqStep", c_uint),
         ("Pages", c_uint),
-        ("AutoInit", c_uint),
-        ("dRate", c_double),
-        ("Rate", c_uint),
-        ("IrqEna", c_uint),
-        ("DacEna", c_uint),
-        ("DacNumber", c_uint),
+        ("AutoInit", c_uint),       # флаг, указывающий на тип сбора/выдачи данных 0 - однократный 1 - циклический; (пока не используется)
+        ("dRate", c_double),        # частота вывода данных на ЦАП (кГц)
+        ("Rate", c_uint),           # частота вывода данных на ЦАП (в кодах для процессора)
+        ("IrqEna", c_uint),         # разрешение генерации прерывания от платы (1/0)
+        ("DacEna", c_uint),         # разрешение работы ЦAП (1/0)
+        ("DacNumber", c_uint),      # номер канала ЦАП на который выводить данные
     ]
 
 
 class WDAC_PAR_1(Structure):
     _pack_ = 1
     _fields_ = [
-        ("s_Type", c_uint),
+        ("s_Type", c_uint),         # тип структуры (должен быть L_DAC_PARAM)
         ("FIFO", c_uint),
         ("IrqStep", c_uint),
         ("Pages", c_uint),
-        ("AutoInit", c_uint),
-        ("dRate", c_double),
-        ("Rate", c_uint),
-        ("IrqEna", c_uint),
-        ("DacEna", c_uint),
+        ("AutoInit", c_uint),       # флаг, указывающий на тип сбора данных 0 - однократный 1 - циклический; (пока не используется)
+        ("dRate", c_double),        # частота вывода данных на ЦАП (кГц)
+        ("Rate", c_uint),           # частота вывода данных на ЦАП (в кодах для процессора)
+        ("IrqEna", c_uint),         # разрешение генерации прерывания от платы (1/0)
+        ("DacEna", c_uint),         # разрешение работы ЦAП (1/0)
         ("Reserved1", c_uint),
     ]
 
@@ -484,56 +484,56 @@ class WDAC_PAR_1(Structure):
 class WADC_PAR_0(Structure):
     _pack_ = 1
     _fields_ = [
-        ("s_Type", c_uint),
+        ("s_Type", c_uint),                 # тип структуры (должен быть L_ADC_PARAM)
         ("FIFO", c_uint),
         ("IrqStep", c_uint),
         ("Pages", c_uint),
-        ("AutoInit", c_uint),
-        ("dRate", c_double),
-        ("dKadr", c_double),
-        ("dScale", c_double),
-        ("Rate", c_uint),
-        ("Kadr", c_uint),
-        ("Scale", c_uint),
-        ("FPDelay", c_uint),
-        ("SynchroType", c_uint),
-        ("SynchroSensitivity", c_uint),
-        ("SynchroMode", c_uint),
-        ("AdChannel", c_uint),
-        ("AdPorog", c_uint),
-        ("NCh", c_uint),
-        ("Chn", c_uint * 128),
-        ("IrqEna", c_uint),
-        ("AdcEna", c_uint),
+        ("AutoInit", c_uint),               # флаг, указывающий на тип сбора данных 0 - однократный 1 - циклический
+        ("dRate", c_double),                # частота опроса каналов в кадре (кГц)
+        ("dKadr", c_double),                # интервал между кадрами (мс)
+        ("dScale", c_double),               # масштаб работы таймера для 1250 или делителя для 1221
+        ("Rate", c_uint),                   # частота опроса каналов в кадре (в кодах для процессора, вычисляется библиотекой)
+        ("Kadr", c_uint),                   # интервал между кадрами (в кодах для процессора, вычисляется библиотекой)
+        ("Scale", c_uint),                  # масштаб работы таймера для 1250 или делителя для 1221 (в кодах для процессора, вычисляется библиотекой)
+        ("FPDelay", c_uint),                # служебная величина задержки выдачи первого отсчета (вычисляется библиотекой)
+        ("SynchroType", c_uint),            # тип синхронизации
+        ("SynchroSensitivity", c_uint),     # вид синхронизации
+        ("SynchroMode", c_uint),            # режим синхронизации
+        ("AdChannel", c_uint),              # канал, по которому выполняется синхронизация
+        ("AdPorog", c_uint),                # уровень синхронизации
+        ("NCh", c_uint),                    # количество опрашиваемых каналов
+        ("Chn", c_uint * 128),              # массив с номерами каналов и усилением на них. Описывает порядок опроса каналов
+        ("IrqEna", c_uint),                 # разрешение генерации прерывания от платы (1/0)
+        ("AdcEna", c_uint),                 # разрешение работы АЦП (1/0)
     ]
 
 
 class WADC_PAR_1(Structure):
     _pack_ = 1
     _fields_ = [
-        ("s_Type", c_uint),
+        ("s_Type", c_uint),             # тип структуры (должен быть L_ADC_PARAM)
         ("FIFO", c_uint),
         ("IrqStep", c_uint),
         ("Pages", c_uint),
-        ("AutoInit", c_uint),
-        ("dRate", c_double),
-        ("dKadr", c_double),
-        ("Reserved1", c_ushort),
-        ("DigRate", c_ushort),
-        ("DM_Ena", c_uint),
-        ("Rate", c_uint),
-        ("Kadr", c_uint),
-        ("StartCnt", c_uint),
-        ("StopCnt", c_uint),
-        ("SynchroType", c_uint),
-        ("SynchroMode", c_uint),
-        ("AdPorog", c_uint),
-        ("SynchroSrc", c_uint),
-        ("AdcIMask", c_uint),
-        ("NCh", c_uint),
-        ("Chn", c_uint * 128),
-        ("IrqEna", c_uint),
-        ("AdcEna", c_uint),
+        ("AutoInit", c_uint),           # флаг, указывающий на тип сбора данных 0 - однократный 1 - циклический
+        ("dRate", c_double),            # частота опроса каналов в кадре (кГц)
+        ("dKadr", c_double),            # интервал между кадрами (мс)
+        ("Reserved1", c_ushort),        # зарезервировано
+        ("DigRate", c_ushort),          # делитель частоты для цифрового потока
+        ("DM_Ena", c_uint),             # разрешение/запрещение маркировки данных
+        ("Rate", c_uint),               # частота опроса каналов в кадре (в кодах для цифрового автомата)
+        ("Kadr", c_uint),               # интервал между кадрами (в кодах для цифрового автомата)
+        ("StartCnt", c_uint),           # задержка старта в кадрах
+        ("StopCnt", c_uint),            # сколько кадров собирать после старта
+        ("SynchroType", c_uint),        # тип синхронизации
+        ("SynchroMode", c_uint),        # режим синхронизации и номер канала
+        ("AdPorog", c_uint),            # порог синхронизации
+        ("SynchroSrc", c_uint),         # источник внешней синхронизации
+        ("AdcIMask", c_uint),           # задает режим ввода по каналам у модуля E2010
+        ("NCh", c_uint),                # количество опрашиваемых каналов
+        ("Chn", c_uint * 128),          # массив с номерами каналов и усилением на них. Описывает порядок опроса каналов
+        ("IrqEna", c_uint),             # разрешение генерации прерывания от платы (1/0)
+        ("AdcEna", c_uint),             # разрешение работы АЦП (1/0)
     ]
 
 

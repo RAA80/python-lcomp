@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name="python-lcomp",
-      version="0.1.1",
+      version="0.1.2",
       description="L-CARD ADC/DAC controllers library",
       url="https://github.com/RAA80/python-lcomp",
       author="Alexey Ryadno",
