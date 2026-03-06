@@ -2,10 +2,18 @@
 
 """Константы и функции для работы с модулем E154."""
 
+from __future__ import annotations
+
 import logging
-from ctypes import POINTER, c_ushort, cast
+from ctypes import POINTER, _Pointer, c_ushort, cast
+from typing import TYPE_CHECKING
 
 from numpy import abs, any, array, float32, frombuffer, insert, int16, split, where
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+    from lcomp.ioctl import PLATA_DESCR_U2, WDAQ_PAR
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -42,7 +50,8 @@ CH_6 = 6
 CH_7 = 7
 
 
-def GetDataADC(daqpar, descr, address, size):
+def GetDataADC(daqpar: WDAQ_PAR, descr: PLATA_DESCR_U2,
+               address: _Pointer[c_ushort], size: int) -> NDArray[float32]:
     """Преобразование кодов АЦП в вольты."""
 
     GetDataADC.tail = getattr(GetDataADC, "tail", [])

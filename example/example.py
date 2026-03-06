@@ -4,6 +4,7 @@
 
 import logging
 
+import lcomp.logging    # !!! Для вывода логирующего сообщения вместо исключения (если нужны исключения - не импортируйте модуль)
 from lcomp.device import e140, e154, e440, e2010, l791
 from lcomp.ioctl import (L_ASYNC, L_DEVICE, L_EVENT, L_PARAM, L_STREAM, L_USER_BASE,
                          WASYNC_PAR, WDAQ_PAR)
